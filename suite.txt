@@ -1,0 +1,59 @@
+240p suite for Colecovision.
+
+Original program by Artemio Urbina.
+Colecovision version by Oscar Toledo G.
+
+Last revision: Dec/21/2023.
+
+Choose items from the menu by moving the stick up and down using any controller.
+
+Select item by pressing any side-buttons on any controller.
+
+*** Video tests > Grid scroll.
+
+Move stick up and down to accelerate or reduce speed.
+
+Move stick left and right to switch square to diagonal pattern.
+
+Press left button to pause movement.
+
+Press right button to switch scroll direction in X or Y.
+
+Press key # to reverse direction.
+
+Press key * to exit test.
+
+*** Video tests > Horizontal stripes.
+
+Press left button to enable alternate stripe lines on each frame.
+
+Press right button to switch stripe lines on each press.
+
+Press key # to show frame count.
+
+Press key * to exit test.
+
+*** Hardware > Controller test.
+
+Show hardware values of controller ports.
+
+Press both side buttons on any controller to exit test.
+
+*** Hardware > BIOS data.
+
+Shows BIOS checksum.
+
+Press any side button on any controller to exit test.
+
+*** Hardware > Memory viewer.
+
+Shows memory contents.
+
+Displace address by moving stick up or down on any controller.
+
+Press any side button on any controller to exit test.
+
+*** Credits
+
+Shows the credits for the 240p suite.
+
