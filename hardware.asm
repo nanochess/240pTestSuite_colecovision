@@ -173,7 +173,7 @@ bios_test:
         jr nz,.1
         jp .3
 .1:        
-.2:     inc ix
+        inc ix
         inc ix
         inc ix
         inc ix
@@ -193,11 +193,11 @@ bios_test:
         ld a,$1e
         call show_message
 
-.4:     halt
+.2:     halt
         call read_joystick_button_debounce
         cpl
         and $e0
-        jr z,.4
+        jr z,.2
         ld a,15
         ld (debounce),a
 

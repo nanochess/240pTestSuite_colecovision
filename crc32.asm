@@ -5,10 +5,9 @@
 	; https://nanochess.org/
 	;
 	; I'm thereby making this code public domain for your Z80 projects.
-	; You only need to provide 4 bytes of data at crc32_value to keep
-	; the intermediate CRC value.
         ;
         ; Creation date: Dec/20/2023.
+        ; Revision date: Dec/23/2023. Optimized processing code.
         ;
 
         ;
@@ -278,9 +277,10 @@ crc32_table:
         ; Init CRC32 calculation.
         ; 
 crc32_init:
-        ld hl,$ffff
-        ld (crc32_value),hl
-        ld (crc32_value+2),hl
+        exx
+        ld de,$ffff     ; Low-word of CRC-32 value.
+        ld bc,$ffff     ; High-word of CRC-32 value.
+        exx
         ret
 
         ;
@@ -291,20 +291,18 @@ crc32_init:
 crc32_calculate:
 .1:
         ld a,(hl)
-        push bc
-        push hl
-        ld de,(crc32_value)
-        ld bc,(crc32_value+2)
-        push de
+        exx
         xor e
-        ld e,a
-        ld d,0
-        ld hl,crc32_table
-        add hl,de
-        add hl,de
-        add hl,de
-        add hl,de
-        pop de
+        ld l,a
+        ld h,0
+        add hl,hl
+        add hl,hl
+        ld a,crc32_table and 255
+        add a,l
+        ld l,a
+        ld a,h
+        adc a,crc32_table>>8
+        ld h,a
         ld a,(hl)
         xor d
         ld e,a
@@ -318,10 +316,7 @@ crc32_calculate:
         ld c,a
         inc hl
         ld b,(hl)
-        ld (crc32_value),de
-        ld (crc32_value+2),bc
-        pop hl
-        pop bc
+        exx
         inc hl
         dec bc
         ld a,b
@@ -330,22 +325,21 @@ crc32_calculate:
         ret
 
         ;
-        ; Get final CRC32
+        ; Get final CRC32 as a 32-bit value in DEHL.
         ;
 crc32_final:
-        ld hl,(crc32_value)
-        ld de,(crc32_value+2)
-        ld a,d
-        cpl
-        ld d,a
+        exx
         ld a,e
         cpl
-        ld e,a
-        ld a,h
+        ld l,a
+        ld a,d
         cpl
         ld h,a
-        ld a,l
+        ld a,c
         cpl
-        ld l,a
+        ld e,a
+        ld a,b
+        cpl
+        ld d,a
         ret
 
