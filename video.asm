@@ -6,12 +6,15 @@
         ;
         ; Creation date: Dec/20/2023.
 	; Revision date: Dec/21/2023. Added Grid Scroll Test.
+        ; Revision date: Dec/22/2023. Added Checkerboard.
         ;
 
 menu_video:
         dw $0820
-        db "*Grid Scroll Test",0
+        db "*Checkerboard",0
         dw $0920
+        db "*Grid Scroll Test",0
+        dw $0a20
         db "*Horizontal Stripes",0
     if 0
         dw $0820
@@ -24,8 +27,6 @@ menu_video:
         db "*Timing & Reflex Test",0
         dw $0c20
         db "*Scroll Test",0
-        dw $0d20
-        db "*Checkerboard",0
         dw $1020
         db "*Phase & Sample Rate",0
         dw $1120
@@ -45,6 +46,8 @@ video_menu:
         call build_menu
 
         or a
+        jp z,checkerboard
+        dec a
         jp z,grid_scroll
         dec a
         jp z,draw_stripes
@@ -267,6 +270,188 @@ grid_scroll:
         db $e1
         db $c3
         db $87
+
+checkerboard:
+        call DISSCR
+        call clear_sprites
+        call load_letters
+        call nmi_off
+        ld hl,$0000
+        ld bc,$0008
+        xor a
+        call FILVRM
+        ld hl,$0800
+        ld bc,$0008
+        xor a
+        call FILVRM
+        ld hl,$1000
+        ld bc,$0008
+        xor a
+        call FILVRM
+        ld hl,$2000
+        ld bc,$0008
+        ld a,$f1
+        call FILVRM
+        ld hl,$2800
+        ld bc,$0008
+        ld a,$f1
+        call FILVRM
+        ld hl,$3000
+        ld bc,$0008
+        ld a,$f1
+        call FILVRM
+        ld hl,$3800
+        ld bc,$0300
+        ld a,$00
+        call FILVRM
+        call nmi_on
+        call ENASCR
+
+        xor a
+        ld (alternate),a
+        ld (invert),a
+        ld (field),a
+        ld (dframe),a
+        ld (cframe),a
+        ld a,$ff
+        ld (oldbuttons),a
+        halt
+        ld hl,.stripespos
+        ld de,$0000
+        ld bc,$0008
+        call LDIRVM3
+
+.1:
+        halt
+        ld a,(alternate)
+        ld b,a
+        ld a,(invert)
+        or b
+        jr z,.2
+        ld a,(field)
+        or a
+        jr z,.3
+        ld hl,.stripespos
+        ld de,$0000
+        ld bc,$0008
+        call LDIRVM3
+        xor a
+        ld (field),a
+        jr .4
+
+.3:
+        ld hl,.stripesneg
+        ld de,$0000
+        ld bc,$0008
+        call LDIRVM3
+        ld a,1
+        ld (field),a
+.4:
+        xor a
+        ld (invert),a
+.2:
+        ld a,(dframe)
+        or a
+        jr z,.9
+        ld hl,buffer
+        ld (hl),'F'
+        inc hl
+        ld (hl),'r'
+        inc hl
+        ld (hl),'a'
+        inc hl
+        ld (hl),'m'
+        inc hl
+        ld (hl),'e'
+        inc hl
+        ld (hl),':'
+        inc hl
+        ld (hl),' '
+        inc hl
+        ld a,(cframe)
+        rrca
+        rrca
+        rrca
+        rrca
+        and $0f
+        add a,$30
+        ld (hl),a
+        inc hl
+        ld a,(cframe)
+        and $0f
+        add a,$30
+        ld (hl),a
+        ld hl,buffer
+        ld de,$3816
+        ld bc,$0009
+        call LDIRVM
+        ld a,(cframe)
+        add a,1         ; cannot be inc a
+        daa
+        cp $60
+        jr nz,$+3
+        xor a
+        ld (cframe),a
+        jr .5
+
+.9:
+        ld hl,$3816
+        ld bc,$0009
+        xor a
+        call FILVRM
+.5:
+        call read_joystick_button
+        cpl
+        ld c,a
+        ld a,(oldbuttons)
+        cpl
+        and c
+        ld b,a
+        ld a,c
+        ld (oldbuttons),a
+
+        bit 6,b
+        jr z,.6
+        ld a,(alternate)
+        xor 1
+        ld (alternate),a
+
+.6:
+        bit 7,b
+        jr z,.7
+        ld a,(alternate)
+        or a
+        jr nz,.7
+        ld a,1
+        ld (invert),a
+.7:
+        bit 4,b
+        jr z,.8
+        ld a,(dframe)
+        xor 1
+        ld (dframe),a
+        xor a
+        ld (frame),a
+        ld a,(dframe)
+        or a
+        jr nz,.8
+        ld a,(field)
+        xor 1
+        ld (field),a
+        ld a,1
+        ld (invert),a
+.8:
+        bit 5,b
+        jp z,.1
+        ld a,15
+        ld (debounce),a
+        call reload_menu
+        jp video_menu
+
+.stripespos:
+        db $55,$aa,$55,$aa,$55,$aa,$55,$aa
+.stripesneg:
+        db $aa,$55,$aa,$55,$aa,$55,$aa,$55
 
 draw_stripes:
         call DISSCR

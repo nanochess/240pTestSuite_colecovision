@@ -5,6 +5,7 @@
         ; Colecovision version by Oscar Toledo G. @nanochess
         ;
         ; Creation date: Dec/20/2023.
+        ; Revision date: Dec/22/2023. Moved patterns test to its own file.
         ;
 
         fname "suite.rom"
@@ -353,7 +354,7 @@ main_menu:
 
         ld a,c
         or a
-        jp z,test_menu
+        jp z,patterns_menu
         dec a
         jp z,video_menu
         dec a
@@ -365,19 +366,14 @@ main_menu:
 
         jp bug_warning
 
-test_menu:
-        call clean_menu
-        ld hl,menu_test
-        call build_menu
-
-        jp main_menu
-
 audio_menu:
         call clean_menu
         ld hl,menu_audio
         call build_menu
 
         jp main_menu
+
+        include "patterns.asm"
 
         include "video.asm"
 
@@ -393,6 +389,8 @@ credits_menu:
         cpl
         and $c0
         jr z,.4
+        ld a,15
+        ld (debounce),a
 
         jp main_menu
 
@@ -418,7 +416,7 @@ credits_text:
         dw $1120
         db $1e,"http://junkerhq.net/xrgb",0
         dw $1520
-        db $fe,"Build date: Dec/21/2023",0
+        db $fe,"Build date: Dec/22/2023",0
         dw $0000
 
 reload_menu:
@@ -634,19 +632,6 @@ menu_main:
         db "*Hardware Tests",0
         dw $0d20
         db "*Credits",0
-        dw $0000
-
-menu_test:
-    if 0
-        dw $0820
-        db "*Color & Black Levels",0
-        dw $0920
-        db "*Geometry",0
-        dw $0a20
-        db "*HCFR Patterns",0
-    endif
-        dw $0c20
-        db "*Back to Main Menu",0
         dw $0000
 
 menu_audio:

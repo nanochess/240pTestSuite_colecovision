@@ -3,11 +3,39 @@
 Original program by Artemio Urbina.
 Colecovision version by Oscar Toledo G.
 
-Last revision: Dec/21/2023.
+Last revision: Dec/22/2023.
 
 Choose items from the menu by moving the stick up and down using any controller.
 
 Select item by pressing any side-buttons on any controller.
+
+*** Test Patterns > Color Bleed Check.
+
+This patterns helps diagnose unneeded color up-sampling. It consists of one pixel width color bars alternating with one pixel width black bars.
+
+You can change the vertical bars to a checkerboard by pressing the left side button.
+
+*** Test Patterns > Circles.
+
+Displays five circles for monitor adjustments.
+
+TODO: Make sure these are square in an adjusted monitor.
+
+*** Test Patterns > VDP Color Bars.
+
+Display all the VDP colors in a column arrangement.
+
+TODO: Measure voltage levels.
+
+*** Video tests > Checkerboard.
+
+Press left button to alternate pixels on each frame.
+
+Press right button to switch pixels on each press.
+
+Press key # to show frame count.
+
+Press key * to exit test.
 
 *** Video tests > Grid scroll.
 
