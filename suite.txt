@@ -51,6 +51,22 @@ Display all the VDP colors in a column arrangement.
 
 TODO: Measure voltage levels.
 
+*** Video tests > Drop Shadow Test.
+
+Move shadow using the stick of any controller.
+
+Press left button to alternate frame where shadow is drawn.
+
+Press right button to toggle sprite.
+
+Press key * to exit test.
+
+*** Video tests > Striped Sprite Test.
+
+Move shadow using the stick of any controller.
+
+Press any side button or key * to exit test.
+
 *** Video tests > Checkerboard.
 
 Press left button to alternate pixels on each frame.

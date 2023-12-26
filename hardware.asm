@@ -62,6 +62,7 @@ controller_test:
 .0:
         halt
 
+    if COLECO
         out (KEYSEL),a
         ex (sp),hl
         ex (sp),hl
@@ -113,6 +114,7 @@ controller_test:
         ld de,$0b60
         ld a,$1e
         call show_message
+    endif
 
         call read_joystick_button_debounce
         and $c0

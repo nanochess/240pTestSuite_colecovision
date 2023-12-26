@@ -2,22 +2,31 @@
         ; 240p test suite
         ;
         ; Original program by Artemio Urbina. @artemio
-        ; Colecovision version by Oscar Toledo G. @nanochess
+        ; Colecovision/MSX version by Oscar Toledo G. @nanochess
         ;
         ; Creation date: Dec/20/2023.
         ; Revision date: Dec/22/2023. Moved patterns test to its own file.
+        ; Revision date: Dec/25/2023. Now it works in MSX.
         ;
 
-        fname "suite.rom"
+COLECO: equ 1   ; Define this to 1 for Colecovision
+MSX:    equ 0   ; Define this to 1 for MSX
 
+ram_base:       equ $E000-$7000*COLECO
+VDP:            equ $98+$26*COLECO
+                         
 TURN_OFF_SOUND: EQU $1FD6
 
-JOYSEL: equ $c0
-KEYSEL: equ $80
-VDP:    equ $be
 PSG:    equ $ff
 JOY1:   equ $fc
 JOY2:   equ $ff
+
+    if COLECO
+
+        fname "suitecv.rom"
+
+KEYSEL: equ $80
+JOYSEL: equ $c0
 
         org $8000
 
@@ -44,6 +53,70 @@ JOY2:   equ $ff
         jp $0000        ; rst $38
 
         jp nmi_handler  ; NMI
+    endif
+
+    if MSX
+        fname "suitemsx.rom"
+
+        forg $0000
+        org $4000
+	dw $4241
+	dw START	
+	dw 0
+	dw 0
+	dw 0
+        dw 0
+	dw 0
+	dw 0
+
+GTSTCK: EQU $00D5       ; A= Stick to test. Output: A= Stick direction.
+GTTRIG: EQU $00D8       ; A= Button to test. Output: A= Pressed state.
+
+ENASLT: EQU $0024       ; Select slot (H=Addr, A=Slot)
+WRTPSG: EQU $0093       ; Escribe PSG, A=Reg. E=Dato
+RSLREG: EQU $0138       ; Read slot status in A
+SNSMAT: EQU $0141       ; Read keyboard matrix (row in A, output in A)
+
+        ;
+        ; Get slot mapping
+        ;
+get_slot_mapping:
+        call rotate_slot
+        ld c,a
+        add a,$C1       ; EXPTBL
+        ld l,a
+        ld h,$FC
+        ld a,(hl)
+        and $80         ; Get expanded flag
+        or c
+        ld c,a
+        inc hl
+        inc hl
+        inc hl
+        inc hl
+        ld a,(hl)       ; SLTTBL
+        call rotate_slot
+        rlca
+        rlca
+        or c            ; A contains bit 7 = Marks expanded
+                        ;            bit 6 - 4 = Doesn't care
+                        ;            bit 3 - 2 = Secondary mapper
+                        ;            bit 1 - 0 = Primary mapper
+        ret
+
+rotate_slot:
+        push bc
+        dec b
+        inc b
+        jr z,.1
+.0:     rrca
+        rrca
+        djnz .0
+.1:     and 3
+        pop bc
+        ret
+
+    endif
 
 SETWRT:
 	ld a,l
@@ -143,30 +216,8 @@ LDIRMV:
         jp nz,.1
         ret
 
-read_keypad:
-        push bc
-        out (KEYSEL),a
-        ex (sp),hl
-        ex (sp),hl
-        in a,(JOY1)
-        ld b,a
-        in a,(JOY2)
-        and b
-        pop bc
-        ret
-
-read_joystick:
-        push bc
-        out (JOYSEL),a
-        ex (sp),hl
-        ex (sp),hl
-        in a,(JOY1)
-        ld b,a
-        in a,(JOY2)
-        and b
-        pop bc
-        ret
-
+        ;
+        ; Main input function:
         ;
         ; Output:
         ; bit 0 = 0 = Up
@@ -179,6 +230,7 @@ read_joystick:
         ; bit 7 = 0 = Right button (button B)
         ;
 read_joystick_button:
+    if COLECO
         push bc
         out (KEYSEL),a
         ex (sp),hl
@@ -215,7 +267,92 @@ read_joystick_button:
         or $b0
         and b
         pop bc
+    endif
+    if MSX
+        push bc
+        push de
+        push hl
+        xor a
+        call GTSTCK
+        or a
+        jp nz,.1
+        ld a,1
+        call GTSTCK
+        or a
+        jp nz,.1
+        ld a,2
+        call GTSTCK
+.1:     ld hl,joystick_to_bits
+        ld e,a
+        ld d,0
+        add hl,de
+        ld b,(hl)
+
+        ld a,0
+        push bc
+        call GTTRIG
+        pop bc
+        or a
+        jr z,$+4
+        res 6,b
+
+        ld a,4
+        call SNSMAT
+        bit 2,a
+        jr nz,$+4
+        res 7,b
+
+        ld a,5
+        call SNSMAT
+        bit 7,a
+        jr nz,$+4
+        res 4,b
+
+        bit 5,a
+        jr nz,$+4
+        res 5,b
+
+        ld a,1
+        push bc
+        call GTTRIG
+        pop bc
+        or a
+        jr z,$+4
+        res 6,b
+        
+        ld a,2
+        push bc
+        call GTTRIG
+        pop bc
+        or a
+        jr z,$+4
+        res 6,b
+        
+        ld a,3
+        push bc
+        call GTTRIG
+        pop bc
+        or a
+        jr z,$+4
+        res 7,b
+        
+        ld a,4
+        push bc
+        call GTTRIG
+        pop bc
+        or a
+        jr z,$+4
+        res 7,b
+        
+        ld a,b
+        pop hl
+        pop de
+        pop bc
+    endif
         ret
+
+joystick_to_bits:
+        db $ff,$fe,$fc,$fd,$f9,$fb,$f3,$f7,$f6
 
 read_joystick_button_debounce:
         ld a,(debounce)
@@ -234,16 +371,22 @@ read_joystick_button_debounce:
         ; Disallow NMI
         ;
 nmi_off:
+    if COLECO
         push hl
         ld hl,mode
         set 0,(hl)
         pop hl
+    endif
+    if MSX
+        di
+    endif
         ret
 
         ;
         ; Allow NMI
         ;
 nmi_on:
+    if COLECO
         push hl
         ld hl,mode
         res 0,(hl)
@@ -256,11 +399,17 @@ nmi_on:
         ld hl,mode
         res 1,(hl)
         jp nmi_handler.1
+    endif
+    if MSX
+        ei
+        ret
+    endif
 
         ;
         ; Handle NMI
         ;
 nmi_handler:
+    if COLECO
         push af
         push hl
         ld hl,mode
@@ -304,6 +453,34 @@ nmi_handler:
         in a,(VDP+1)
         pop af
         retn
+    endif
+    if MSX
+;        call emit_sound         
+
+        ld hl,mode
+        bit 3,(hl)
+        jr z,.3m
+        ;
+        ; Load sprite attribute table
+        ;
+        ld hl,$3f80
+        call SETWRT
+        ld hl,sprites
+        ld bc,128*256+VDP
+        outi
+        jp nz,$-2
+.3m:
+
+;        call generate_sound
+
+        ld hl,(frame)
+        inc hl
+        ld (frame),hl
+
+        in a,(VDP+1)
+        ei
+        ret
+    endif
 
 vdp_no_interrupt:
         ld a,$82
@@ -316,6 +493,7 @@ vdp_no_interrupt:
         ret
 
 START:
+    if COLECO
         di
         ld sp,STACK
         call TURN_OFF_SOUND
@@ -331,7 +509,7 @@ START:
         dec hl
         bit 2,h
         jr z,.1
-
+    
         ld a,($0069)    ; Colecovision region info.
         ld (frames_per_sec),a
 
@@ -339,6 +517,41 @@ START:
         ld de,$ff80     ; Back to point to space character.
         add hl,de
         ld (letters_bitmaps),hl
+    endif
+    if MSX
+	ld sp,stack
+	; Sound guaranteed to be off
+        ld hl,nmi_handler
+	ld ($fd9b),hl
+	ld a,$c3
+	ld ($fd9a),a
+        ;
+        ; Clear memory
+        ;
+        ld hl,STACK-1
+        xor a
+.1m:    ld (hl),a
+        dec hl
+        bit 5,h
+        jr nz,.1m
+    
+        ld a,($002b)
+        bit 7,a
+        ld a,60
+        jr z,$+4
+        ld a,50
+        ld (frames_per_sec),a
+        call RSLREG
+        ld b,1          ; $4000-$7fff
+        call get_slot_mapping
+        ld h,$80
+        call ENASLT     ; Map into $8000-$BFFF
+
+        ld hl,($0004)   ; MSX letters BIOS.
+        ld de,$0100     ; Point to space character.
+        add hl,de
+        ld (letters_bitmaps),hl
+    endif
 
 ;       call init_sound
 
@@ -400,7 +613,13 @@ credits_text:
         dw $0920
         db $1e,"Artemio Urbina",0
         dw $0a20
-        db $4e,"Colecovision Developer:",0
+        db $4e
+    if COLECO
+        db "Colecovision Developer:",0
+    endif
+    if MSX
+        db "MSX1 Developer:",0
+    endif
         dw $0b20
         db $1e,"Oscar Toledo G.",0
         dw $0c20
@@ -416,7 +635,7 @@ credits_text:
         dw $1120
         db $1e,"http://junkerhq.net/xrgb",0
         dw $1520
-        db $fe,"Build date: Dec/23/2023",0
+        db $fe,"Build date: Dec/25/2023",0
         dw $0000
 
 reload_menu:
@@ -1069,13 +1288,25 @@ title2:
 title3:
         incbin "title.dat",$3800,$0020
 
+donna0:
+        incbin "donna0.bin"
+donna1:
+        incbin "donna1.bin"
+donna2:
+        incbin "donna2.bin"
+donna3:
+        incbin "donna.dat",$3800,$0008
+
+striped:
+        incbin "striped.dat"
+        
         include "crc32.asm"
 
 rom_end:
 
-        ds $10000-$,$ff
+        ds COLECO*$10000+MSX*$c000-$,$ff
 
-        org $7000
+        org ram_base
 sprites:
         rb 128
 frame:  rb 2            ; Frame counter.
@@ -1102,9 +1333,9 @@ back:           rb 1    ; grid_scroll
 pause:          rb 1    ; grid_scroll
 direction:      rb 1    ; grid_scroll
 
-bitmap_letters: equ $7100
+bitmap_letters: equ ram_base+$0100
 
 ram_end:
 
-stack:  equ $7400
+stack:  equ ram_base+$0400
 

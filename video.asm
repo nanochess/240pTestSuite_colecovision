@@ -7,20 +7,22 @@
         ; Creation date: Dec/20/2023.
 	; Revision date: Dec/21/2023. Added Grid Scroll Test.
         ; Revision date: Dec/22/2023. Added Checkerboard.
+        ; Revision date: Dec/25/2023. Added Drop Shadow Test and Striped
+        ;                             Sprite Test.
         ;
 
 menu_video:
         dw $0820
-        db "*Checkerboard",0
-        dw $0920
-        db "*Grid Scroll Test",0
-        dw $0a20
-        db "*Horizontal Stripes",0
-    if 0
-        dw $0820
         db "*Drop Shadow Test",0
         dw $0920
         db "*Striped Sprite Test",0
+        dw $0a20
+        db "*Checkerboard",0
+        dw $0b20
+        db "*Grid Scroll Test",0
+        dw $0c20
+        db "*Horizontal Stripes",0
+    if 0
         dw $0a20
         db "*Lag Test",0
         dw $0b20
@@ -36,7 +38,7 @@ menu_video:
         dw $1320
         db "*Diagonal Test",0
     endif
-        dw $0b20
+        dw $0e20
         db "*Back to Main Menu",0
         dw $0000
 
@@ -46,6 +48,10 @@ video_menu:
         call build_menu
 
         or a
+        jp z,drop_shadow
+        dec a
+        jp z,striped_sprite
+        dec a
         jp z,checkerboard
         dec a
         jp z,grid_scroll
@@ -54,6 +60,292 @@ video_menu:
         
         jp main_menu
 
+        ;
+        ; Drop Shadow test
+        ;
+drop_shadow:
+        call DISSCR
+        call clear_sprites
+        call highres
+        ld hl,donna0
+        ld de,$0000
+        call unpack
+        ld hl,donna1
+        ld de,$2000
+        call unpack
+        ld hl,donna2
+        ld de,$1800
+        call unpack
+        ld hl,striped
+        ld de,$1840
+        ld bc,$0100
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        ld hl,donna3
+        ld de,$3f90
+        ld bc,$0008
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        call ENASCR
+        xor a
+        ld (cframe),a
+        ld (invert),a
+        ld a,$70
+        ld (x),a
+        ld a,$50
+        ld (y),a
+        ld a,$08
+        ld (buffer+2),a
+        add a,$04
+        ld (buffer+6),a
+        add a,$04
+        ld (buffer+10),a
+        add a,$04
+        ld (buffer+14),a
+        ld a,$01
+        ld (buffer+3),a
+        ld (buffer+7),a
+        ld (buffer+11),a
+        ld (buffer+15),a
+.1:
+        ld a,(cframe)
+        ld b,a
+        ld a,(invert)
+        cp b
+        jr nz,.2
+        ld a,(y)
+        dec a
+        ld (buffer),a
+        ld (buffer+4),a
+        add a,16
+        ld (buffer+8),a
+        ld (buffer+12),a
+        ld a,(x)
+        ld (buffer+1),a
+        ld (buffer+9),a
+        add a,16
+        ld (buffer+5),a
+        ld (buffer+13),a
+        jr .3
+.2:
+        ld a,$d1
+        ld (buffer),a
+        ld (buffer+4),a
+        ld (buffer+8),a
+        ld (buffer+12),a
+.3:
+
+        halt
+        ld hl,buffer
+        ld de,$3f80
+        ld bc,$0010
+        call LDIRVM
+
+        ld a,(cframe)
+        xor 1
+        ld (cframe),a
+
+        call read_joystick_button_debounce
+        bit 0,a
+        jr nz,.4
+        push af
+        ld a,(y)
+        or a
+        jr z,$+3
+        dec a
+        ld (y),a
+        pop af
+.4:
+        bit 1,a
+        jr nz,.5
+        push af
+        ld a,(x)
+        cp $e0
+        jr z,$+3
+        inc a
+        ld (x),a
+        pop af
+.5:
+        bit 2,a
+        jr nz,.6
+        push af
+        ld a,(y)
+        cp $a0
+        jr z,$+3
+        inc a
+        ld (y),a
+        pop af
+.6:
+        bit 3,a
+        jr nz,.7
+        push af
+        ld a,(x)
+        or a
+        jr z,$+3
+        dec a
+        ld (x),a
+        pop af
+.7:
+        bit 6,a
+        jr nz,.8
+        push af
+        ld a,15
+        ld (debounce),a
+        ld a,(invert)
+        xor 1
+        ld (invert),a
+        pop af
+.8:
+        bit 7,a
+        jr nz,.9
+        push af
+        ld a,15
+        ld (debounce),a
+        ld a,(buffer+2)
+        cp $08
+        ld a,$18
+        jr z,$+4
+        ld a,$08
+        ld (buffer+2),a
+        add a,$04
+        ld (buffer+6),a
+        add a,$04
+        ld (buffer+10),a
+        add a,$04
+        ld (buffer+14),a
+        pop af
+.9:
+        cpl
+        and $20
+        jp z,.1
+        ld a,15
+        ld (debounce),a
+
+        call reload_menu
+        jp video_menu
+
+        ;
+        ; Striped Sprite test
+        ;
+striped_sprite:
+        call DISSCR
+        call clear_sprites
+        call highres
+        ld hl,donna0
+        ld de,$0000
+        call unpack
+        ld hl,donna1
+        ld de,$2000
+        call unpack
+        ld hl,donna2
+        ld de,$1800
+        call unpack
+        ld hl,striped
+        ld de,$1840
+        ld bc,$0100
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        ld hl,donna3
+        ld de,$3f90
+        ld bc,$0008
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        call ENASCR
+        ld a,$70
+        ld (x),a
+        ld a,$50
+        ld (y),a
+        ld a,$08
+        ld (buffer+2),a
+        add a,$04
+        ld (buffer+6),a
+        add a,$04
+        ld (buffer+10),a
+        add a,$04
+        ld (buffer+14),a
+        ld a,$01
+        ld (buffer+3),a
+        ld (buffer+7),a
+        ld (buffer+11),a
+        ld (buffer+15),a
+.1:
+        ld a,(y)
+        dec a
+        ld (buffer),a
+        ld (buffer+4),a
+        add a,16
+        ld (buffer+8),a
+        ld (buffer+12),a
+        ld a,(x)
+        ld (buffer+1),a
+        ld (buffer+9),a
+        add a,16
+        ld (buffer+5),a
+        ld (buffer+13),a
+
+        halt
+        ld hl,buffer
+        ld de,$3f80
+        ld bc,$0010
+        call LDIRVM
+
+        call read_joystick_button_debounce
+        bit 0,a
+        jr nz,.4
+        push af
+        ld a,(y)
+        or a
+        jr z,$+3
+        dec a
+        ld (y),a
+        pop af
+.4:
+        bit 1,a
+        jr nz,.5
+        push af
+        ld a,(x)
+        cp $e0
+        jr z,$+3
+        inc a
+        ld (x),a
+        pop af
+.5:
+        bit 2,a
+        jr nz,.6
+        push af
+        ld a,(y)
+        cp $a0
+        jr z,$+3
+        inc a
+        ld (y),a
+        pop af
+.6:
+        bit 3,a
+        jr nz,.7
+        push af
+        ld a,(x)
+        or a
+        jr z,$+3
+        dec a
+        ld (x),a
+        pop af
+.7:
+        cpl
+        and $e0
+        jp z,.1
+        ld a,15
+        ld (debounce),a
+
+        call reload_menu
+        jp video_menu
+
+        ;
+        ; Grid Scroll test
+        ;
 grid_scroll:
         call DISSCR
         call clear_sprites

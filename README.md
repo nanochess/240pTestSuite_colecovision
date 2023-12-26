@@ -4,7 +4,7 @@
 
 Your options to use the suite.rom file are:
 
-* Your favorite Colecovision emulator (BlueMSX or CoolCV).
+* Your favorite Colecovision/MSX emulator (BlueMSX or CoolCV).
 * Load the file into a flash cartridge like the AtariMAX Ultimate SD Colecovision cartridge.
 * Program the file into an EPROM and put it into a cartridge PCB for Colecovision.
 
@@ -14,7 +14,7 @@ Detailed usage instructions are in the suite.txt file.
 
 You require tniASM v0.44 or v0.45 available freely from [http://www.tni.nl/products/tniasm.html](http://www.tni.nl/products/tniasm.html)
 
-You only need to assemble the file suite.asm and it includes all the other required files.
+You only need to assemble the file suite.asm and it includes all the other required files (edit the COLECO or MSX label accordingly).
 
 There are some files coming from the development environment (WinXP) that create the required images (images.bat) and assemble the code (e.bat).
 
@@ -23,7 +23,7 @@ Other utilities required are Pletter to compress the VDP data, and TMSColor to c
 ===============================================================================
 Original 240p Test Suite is © Copyright 2011-2021 Artemio Urbina
 
-Colecovision version is © Copyright 2023 Oscar Toledo G.
+Colecovision/MSX version is © Copyright 2023 Oscar Toledo G.
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
 
