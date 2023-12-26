@@ -7,6 +7,7 @@
         ; Creation date: Dec/20/2023.
         ; Revision date: Dec/22/2023. Moved patterns test to its own file.
         ; Revision date: Dec/25/2023. Now it works in MSX.
+        ; Revision date: Dec/26/2023. Added minimal support for audio.
         ;
 
 COLECO: equ 1   ; Define this to 1 for Colecovision
@@ -73,7 +74,7 @@ GTSTCK: EQU $00D5       ; A= Stick to test. Output: A= Stick direction.
 GTTRIG: EQU $00D8       ; A= Button to test. Output: A= Pressed state.
 
 ENASLT: EQU $0024       ; Select slot (H=Addr, A=Slot)
-WRTPSG: EQU $0093       ; Escribe PSG, A=Reg. E=Dato
+WRTPSG: EQU $0093       ; Write PSG, A=Reg. E=Data
 RSLREG: EQU $0138       ; Read slot status in A
 SNSMAT: EQU $0141       ; Read keyboard matrix (row in A, output in A)
 
@@ -542,8 +543,13 @@ START:
         ld a,50
         ld (frames_per_sec),a
         call RSLREG
+        ld b,0          ; $4000-$7fff
+        call get_slot_mapping
+        ld (bios_rom),a
+        call RSLREG
         ld b,1          ; $4000-$7fff
         call get_slot_mapping
+        ld (cartridge_rom),a
         ld h,$80
         call ENASLT     ; Map into $8000-$BFFF
 
@@ -584,13 +590,37 @@ audio_menu:
         ld hl,menu_audio
         call build_menu
 
+        or a
+        jp z,audio_test
+
         jp main_menu
+
+        ;
+        ; Audio test, approximately 1000 hz.
+        ;
+audio_test:
+        ld hl,112
+        call set_freq
+        ld a,12
+        call set_volume
+
+.1:
+        halt
+        call read_joystick_button_debounce
+        cpl
+        and $e0
+        jp z,.1
+
+        ld a,0
+        call set_volume
+
+        ld a,15
+        ld (debounce),a
+        jp audio_menu
 
         include "patterns.asm"
 
         include "video.asm"
-
-        include "hardware.asm"
 
 credits_menu:
         call clean_menu
@@ -645,6 +675,12 @@ reload_menu:
         call nmi_off
         call WRTVDP
         call nmi_on
+
+        ld bc,$0e02
+        call nmi_off
+        call WRTVDP
+        call nmi_on
+
         call highres
         ld hl,title0
         ld de,$0000
@@ -675,6 +711,36 @@ bug_warning:
 
 bug_1:
         db "You have found a bug :P",0
+
+decimal_number:
+        ld b,0
+        ld de,10000
+        call .1
+        ld de,1000
+        call .1
+        ld de,100
+        call .1
+        ld de,10
+        call .1
+        ld de,1
+        ld b,1
+.1:     ld a,'0'-1
+.2:     inc a
+        or a
+        sbc hl,de
+        jr nc,.2
+        add hl,de
+        cp '0'
+        jr nz,.3
+        ld a,b
+        or a
+        ret z
+        ld a,'0'
+.3:
+        ld (ix+0),a
+        inc ix
+        ld b,1
+        ret
 
 load_letters:
         ld hl,(letters_bitmaps)
@@ -858,15 +924,9 @@ menu_main:
         dw $0000
 
 menu_audio:
-    if 0
         dw $0820
         db "*Sound Test",0
-        dw $0920
-        db "*Audio Sync Test",0
         dw $0a20
-        db "*MDFourier",0
-    endif
-        dw $0c20
         db "*Back to Main Menu",0
         dw $0000
 
@@ -1062,6 +1122,71 @@ highres:
         db $f8,$f9,$fa,$fb,$fc,$fd,$fe,$ff
 
         ;
+        ; Play beep.
+        ;
+play_beep:
+        ld a,(beep)
+        cp 1
+        jr nz,.2
+        ld hl,112
+        call set_freq
+        ld a,12
+        call set_volume
+
+.2:     ld a,(beep)
+        inc a
+        ld (beep),a
+        cp 3
+        ret nz
+        ld a,0
+        call set_volume
+        ret
+
+set_volume:
+    if COLECO
+        xor $0f
+        or $90
+        out (PSG),a
+    endif
+    if MSX
+        ld e,a
+        ld a,8
+        call WRTPSG
+    endif
+        ret
+
+set_freq:
+    if COLECO
+        ld a,l
+        and $0f
+        or $80
+        out (PSG),a
+        srl h
+        rr l
+        srl h
+        rr l
+        srl h
+        rr l
+        srl h
+        rr l
+        ld a,l
+        out (PSG),a
+    endif
+    if MSX
+        push hl
+        ld e,l
+        ld a,0
+        call WRTPSG
+        pop hl
+        push hl
+        ld e,h
+        ld a,1
+        call WRTPSG
+        pop hl
+    endif
+        ret
+
+        ;
         ; Mode 2 table (high-resolution)
         ;
 mode_2_table:
@@ -1080,12 +1205,8 @@ mode_2_table:
 vdp_mode_2:
 	call nmi_off
 
-	ld hl,mode
-        ld a,(hl)
-        and $80
-        ld (hl),a
-        inc hl          ; mode1
-        ld (hl),0
+        xor a
+        ld (mode),a
 
 	ld hl,mode_2_table
 	ld bc,$0800
@@ -1299,7 +1420,15 @@ donna3:
 
 striped:
         incbin "striped.dat"
-        
+circle:
+        incbin "circle.dat"
+digits:
+        incbin "digits.dat"
+lag_per:
+        incbin "lag-per.dat"
+
+        include "hardware.asm"
+
         include "crc32.asm"
 
 rom_end:
@@ -1314,10 +1443,12 @@ mode:   rb 1            ; Current mode.
                         ; bit 0 = 1 = NMI processing disabled.
                         ; bit 1 = 1 = NMI received during NMI disabled.
 frames_per_sec: rb 1    ; Frames per second.
+bios_rom:       rb 1    ; BIOS MSX.
+cartridge_rom:  rb 1    ; MSX.
 debounce:       rb 1
 letters_bitmaps:        rb 2
 
-buffer:         rb 40
+buffer:         rb 64
                           
 alternate:      rb 1
 invert:         rb 1
@@ -1332,6 +1463,19 @@ y:              rb 1    ; grid_scroll
 back:           rb 1    ; grid_scroll
 pause:          rb 1    ; grid_scroll
 direction:      rb 1    ; grid_scroll
+hours:          rb 1    ; lag_test
+minutes:        rb 1    ; lag_test
+seconds:        rb 1    ; lag_test
+frames:         rb 1    ; lag_test
+view:           rb 1    ; timing_reflex_test
+x2:             rb 1    ; timing_reflex_test
+y2:             rb 1    ; timing_reflex_test
+change:         rb 1    ; timing_reflex_test
+vary:           rb 1    ; timing_reflex_test
+variation:      rb 1    ; timing_reflex_test
+pos:            rb 1    ; timing_reflex_test
+total:          rb 2    ; timing_reflex_test
+beep:           rb 1    ; timing_reflex_test
 
 bitmap_letters: equ ram_base+$0100
 

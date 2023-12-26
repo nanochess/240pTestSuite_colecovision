@@ -8,7 +8,7 @@
 	; Revision date: Dec/21/2023. Added Grid Scroll Test.
         ; Revision date: Dec/22/2023. Added Checkerboard.
         ; Revision date: Dec/25/2023. Added Drop Shadow Test and Striped
-        ;                             Sprite Test.
+        ;                             Sprite Test. Added Lag Test.
         ;
 
 menu_video:
@@ -19,26 +19,14 @@ menu_video:
         dw $0a20
         db "*Checkerboard",0
         dw $0b20
-        db "*Grid Scroll Test",0
+        db "*Lag Test",0        
         dw $0c20
-        db "*Horizontal Stripes",0
-    if 0
-        dw $0a20
-        db "*Lag Test",0
-        dw $0b20
         db "*Timing & Reflex Test",0
-        dw $0c20
-        db "*Scroll Test",0
-        dw $1020
-        db "*Phase & Sample Rate",0
-        dw $1120
-        db "*Disappearing Logo",0
-        dw $1220
-        db "*Backlit Zone Test",0
-        dw $1320
-        db "*Diagonal Test",0
-    endif
+        dw $0d20
+        db "*Grid Scroll Test",0
         dw $0e20
+        db "*Horizontal Stripes",0
+        dw $1020
         db "*Back to Main Menu",0
         dw $0000
 
@@ -53,6 +41,10 @@ video_menu:
         jp z,striped_sprite
         dec a
         jp z,checkerboard
+        dec a
+        jp z,lag_test
+        dec a
+        jp z,timing_reflex_test
         dec a
         jp z,grid_scroll
         dec a
@@ -745,6 +737,1346 @@ checkerboard:
 .stripesneg:
         db $aa,$55,$aa,$55,$aa,$55,$aa,$55
 
+LAG_BK_COLOR:   EQU $0f
+
+        ;
+        ; Lag Test.
+        ;
+lag_test:
+        call DISSCR
+        call clear_sprites
+        ld bc,LAG_BK_COLOR*256+$07
+        call nmi_off
+        call WRTVDP
+        call nmi_on
+        ld hl,$0000
+        ld bc,$1800
+        xor a
+        call nmi_off
+        call FILVRM
+        call nmi_on
+        ld hl,$2000
+        ld bc,$1800
+        ld a,$10+LAG_BK_COLOR
+        call nmi_off
+        call FILVRM
+        call nmi_on
+
+        ld hl,$3800
+        ld b,$20
+        call nmi_off
+.1:     ld a,l
+        call WRTVRM
+        inc hl
+        djnz .1
+        call nmi_on
+        ld hl,$3820
+        ld bc,$02e0
+        xor a
+        call nmi_off
+        call FILVRM
+        call nmi_on
+        ld hl,$3c00
+        ld b,$20
+        call nmi_off
+.2:     ld a,l
+        call WRTVRM
+        inc hl
+        djnz .2
+        call nmi_on
+        ld hl,$3c20
+        ld bc,$02e0
+        xor a
+        call nmi_off
+        call FILVRM
+        call nmi_on
+
+
+        ld hl,.lag_message
+        ld de,$0000
+        ld a,$10+LAG_BK_COLOR
+        call show_message
+        ld hl,digits
+        ld de,$005b*8
+        ld bc,165*8
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        ld hl,$2000+$005b*8
+        ld bc,165*8
+        ld a,$10+LAG_BK_COLOR
+        call nmi_off
+        call FILVRM
+        call nmi_on
+
+        ld hl,circle
+        ld de,$0800+$10*8
+        ld bc,49*8
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        ld hl,$2800+$10*8
+        ld bc,49*8
+        ld a,$40+LAG_BK_COLOR
+        call nmi_off
+        call FILVRM
+        call nmi_on
+        ld hl,circle
+        ld de,$0800+$48*8
+        ld bc,49*8
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        ld hl,$2800+$48*8
+        ld bc,49*8
+        ld a,$60+LAG_BK_COLOR
+        call nmi_off
+        call FILVRM
+        call nmi_on
+        ld hl,digits+15*8*1     ; Point to digit 1.
+        ld de,$0800+$0080*8
+        ld bc,15*8*4
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        ld hl,$2800+$0080*8
+        ld bc,15*8*4
+        ld a,$f4
+        call nmi_off
+        call FILVRM
+        call nmi_on
+        ld hl,digits+15*8*1     ; Point to digit 1.
+        ld de,$0800+$00c0*8
+        ld bc,15*8*4
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        ld hl,$2800+$00c0*8
+        ld bc,15*8*4
+        ld a,$f6
+        call nmi_off
+        call FILVRM
+        call nmi_on
+
+        ld hl,circle
+        ld de,$1000+$10*8
+        ld bc,49*8
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        ld hl,$3000+$10*8
+        ld bc,49*8
+        ld a,$40+LAG_BK_COLOR
+        call nmi_off
+        call FILVRM
+        call nmi_on
+        ld hl,circle
+        ld de,$1000+$48*8
+        ld bc,49*8
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        ld hl,$3000+$48*8
+        ld bc,49*8
+        ld a,$60+LAG_BK_COLOR
+        call nmi_off
+        call FILVRM
+        call nmi_on
+        ld hl,digits+15*8*5     ; Point to digit 5.
+        ld de,$1000+$0080*8
+        ld bc,15*8*4
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        ld hl,$3000+$0080*8
+        ld bc,15*8*4
+        ld a,$f4
+        call nmi_off
+        call FILVRM
+        call nmi_on
+        ld hl,digits+15*8*5     ; Point to digit 5.
+        ld de,$1000+$00c0*8
+        ld bc,15*8*4
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        ld hl,$3000+$00c0*8
+        ld bc,15*8*4
+        ld a,$f6
+        call nmi_off
+        call FILVRM
+        call nmi_on
+
+        call nmi_off
+        ld a,10
+        ld hl,$3827
+        call .display_digit
+
+        ld a,10
+        ld hl,$382f
+        call .display_digit
+
+        ld a,10
+        ld hl,$3837
+        call .display_digit
+
+        ld a,10
+        ld hl,$3c27
+        call .display_digit
+
+        ld a,10
+        ld hl,$3c2f
+        call .display_digit
+
+        ld a,10
+        ld hl,$3c37
+        call .display_digit
+        call nmi_on
+
+        call ENASCR
+
+        xor a
+        ld (hours),a
+        ld (minutes),a
+        ld (seconds),a
+        ld (frames),a
+
+        ld a,1
+        ld (cframe),a
+.loop:
+        ;
+        ; The Z80/VDP combination isn't fast enough
+        ; too update in real time, so build screen data
+        ; in a hidden buffer and switch screen buffers.
+        ;
+        ld a,(cframe)
+        or a
+        ld hl,$3820
+        jr z,$+5
+        ld hl,$3c20
+        ld de,$0001
+        add hl,de
+        ld a,(hours)
+        call .display_digits
+        inc hl
+        inc hl
+        ld a,(minutes)
+        call .display_digits
+        inc hl
+        inc hl
+        ld a,(seconds)
+        call .display_digits
+        inc hl
+        inc hl
+        ld a,(frames)
+        call .display_digits
+
+        ld de,$00e3
+        add hl,de
+        ld a,(frames)
+        and $0f
+        cp $01
+        ld bc,$1080
+        jr nz,$+5
+        ld bc,$48c0
+        call .build_circle
+
+        ld a,(frames)
+        and $0f
+        cp $02
+        ld bc,$108f
+        jr nz,$+5
+        ld bc,$48cf
+        call .build_circle
+
+        ld a,(frames)
+        and $0f
+        cp $03
+        ld bc,$109e
+        jr nz,$+5
+        ld bc,$48de
+        call .build_circle
+
+        ld a,(frames)
+        and $0f
+        cp $04
+        ld bc,$10ad
+        jr nz,$+5
+        ld bc,$48ed
+        call .build_circle
+
+        ld de,$00e4
+        add hl,de
+        ld a,(frames)
+        and $0f
+        cp $05
+        ld bc,$1080
+        jr nz,$+5
+        ld bc,$48c0
+        call .build_circle
+
+        ld a,(frames)
+        and $0f
+        cp $06
+        ld bc,$108f
+        jr nz,$+5
+        ld bc,$48cf
+        call .build_circle
+
+        ld a,(frames)
+        and $0f
+        cp $07
+        ld bc,$109e
+        jr nz,$+5
+        ld bc,$48de
+        call .build_circle
+
+        ld a,(frames)
+        and $0f
+        cp $08
+        ld bc,$10ad
+        jr nz,$+5
+        ld bc,$48ed
+        call .build_circle
+
+        halt
+
+        ;
+        ; Switch screen buffers.
+        ;
+        ld a,(cframe)
+        or a
+        ld bc,$0e02
+        jr z,$+5
+        ld bc,$0f02
+        call WRTVDP
+
+        ;
+        ; Handle counters.
+        ;
+        ld a,(frames_per_sec)
+        cp 60
+        ld b,$60
+        jr z,$+4
+        ld b,$50
+
+        ld a,(frames)
+        add a,1
+        daa
+        cp b
+        jr nz,$+3
+        xor a
+        ld (frames),a
+        jp nz,.3
+        ld a,(seconds)
+        add a,1
+        daa
+        cp $60
+        jr nz,$+3
+        xor a
+        ld (seconds),a
+        jp nz,.3
+        ld a,(minutes)
+        add a,1
+        daa
+        cp $60
+        jr nz,$+3
+        xor a
+        ld (minutes),a
+        jp nz,.3
+        ld a,(hours)
+        add a,1
+        daa
+        ld (hours),a
+.3:
+
+        call read_joystick_button_debounce
+        cpl
+        and $e0
+        jp z,.loop
+
+        ld a,15
+        ld (debounce),a
+        call reload_menu
+        jp video_menu
+
+.lag_message:
+        db "   hours    minutes    seconds    frames",0
+
+        ;
+        ; The following routines are so fast as possible.
+        ;
+.display_digits:
+        push af
+        rrca
+        rrca
+        rrca
+        rrca
+        call .display_digit
+        pop af
+.display_digit:
+        and $0f
+        ld b,a
+        add a,a         ; x2
+        add a,a         ; x4
+        add a,a         ; x8
+        add a,a         ; x16
+        sub b           ; x15
+        add a,$5b
+
+        call WRTVRM
+        inc a
+        jp $+3
+        out (VDP),a
+        jp $+3
+        jp $+3
+        inc a
+        out (VDP),a
+        jp $+3
+        ld de,32
+        add hl,de
+
+        inc a
+        call WRTVRM
+        inc a
+        jp $+3
+        out (VDP),a
+        jp $+3
+        jp $+3
+        inc a
+        out (VDP),a
+        jp $+3
+        ld de,32
+        add hl,de
+        
+        inc a
+        call WRTVRM
+        inc a
+        jp $+3
+        out (VDP),a
+        jp $+3
+        jp $+3
+        inc a
+        out (VDP),a
+        jp $+3
+        ld de,32
+        add hl,de
+
+        inc a
+        call WRTVRM
+        inc a
+        jp $+3
+        out (VDP),a
+        jp $+3
+        jp $+3
+        inc a
+        out (VDP),a
+        jp $+3
+        ld de,32
+        add hl,de
+
+        inc a
+        call WRTVRM
+        inc a
+        jp $+3
+        out (VDP),a
+        jp $+3
+        jp $+3
+        inc a
+        out (VDP),a
+        jp $+3
+        ld de,-4*32+3
+        add hl,de
+        ret
+
+.build_circle:
+        push hl
+    if ((buffer and 255)+55)>255
+        error "generate error"
+    endif
+        ld hl,buffer
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),c
+        inc c
+        inc l
+        inc b
+        ld (hl),c
+        inc c
+        inc l
+        inc b
+        ld (hl),c
+        inc c
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),c
+        inc c
+        inc l
+        inc b
+        ld (hl),c
+        inc c
+        inc l
+        inc b
+        ld (hl),c
+        inc c
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),c
+        inc c
+        inc l
+        inc b
+        ld (hl),c
+        inc c
+        inc l
+        inc b
+        ld (hl),c
+        inc c
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),c
+        inc c
+        inc l
+        inc b
+        ld (hl),c
+        inc c
+        inc l
+        inc b
+        ld (hl),c
+        inc c
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),c
+        inc c
+        inc l
+        inc b
+        ld (hl),c
+        inc c
+        inc l
+        inc b
+        ld (hl),c
+        inc c
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        inc l
+        inc b
+        ld (hl),b
+        pop de
+        push de
+        ld b,7
+        ld hl,buffer
+.bc1:   push bc
+        push hl
+        push de
+        ld bc,$0007
+        call LDIRVM
+        pop hl
+        ld bc,32
+        add hl,bc
+        ex de,hl
+        pop hl
+        ld c,7
+        add hl,bc
+        pop bc
+        djnz .bc1
+        pop hl
+        ld de,7
+        add hl,de
+        ret
+
+T_CENTER_X:     EQU 112
+T_CENTER_Y:     EQU 80
+
+        ;
+        ; Timing and Reflex Test.
+        ;
+timing_reflex_test:
+        call DISSCR
+
+        call clear_sprites
+        call highres
+        ld hl,$0000
+        ld bc,$1800
+        xor a
+        call nmi_off
+        call FILVRM
+        ld hl,lag_per
+        ld de,$0a70
+        call .sprtoscr
+        ld hl,lag_per+32
+        ld de,$0a80
+        call .sprtoscr
+        ld hl,lag_per+64
+        ld de,$0c70
+        call .sprtoscr
+        ld hl,lag_per+96
+        ld de,$0c80
+        call .sprtoscr
+        call nmi_on
+        ld hl,$2000
+        ld bc,$1800
+        ld a,$f1
+        call nmi_off
+        call FILVRM
+        call nmi_on
+        ld hl,lag_per
+        ld de,$1800
+        ld bc,$0080
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+
+        ld hl,.message_1
+        ld de,$1400
+        ld a,$21
+        call show_message
+        ld hl,.message_2
+        ld de,$1500
+        ld a,$21
+        call show_message
+        ld hl,.message_3
+        ld de,$1600
+        ld a,$21
+        call show_message
+        ld hl,.message_4
+        ld de,$1700
+        ld a,$21
+        call show_message
+
+        call ENASCR
+
+        ld hl,.fixed
+        ld de,buffer
+        ld bc,16
+        ldir
+        ld hl,.fixed
+        ld bc,16
+        ldir
+
+        xor a
+        ld (view),a
+        ld (pos),a
+        ld a,1
+        ld (speed),a
+        ld (change),a
+        ld a,0
+        ld (vary),a
+        ld a,1
+        ld (variation),a
+        ld a,T_CENTER_X
+        ld (x),a
+        ld a,T_CENTER_Y-36
+        ld (y),a
+        ld a,T_CENTER_X-36
+        ld (x2),a
+        ld a,T_CENTER_Y
+        ld (y2),a
+.loop:
+
+        ld a,(view)
+        cp 1
+        jr z,.1
+        ld a,(x)
+        ld (buffer+1),a
+        ld (buffer+9),a
+        add a,16
+        ld (buffer+5),a
+        ld (buffer+13),a
+        ld a,(y)
+        dec a
+        ld (buffer),a
+        ld (buffer+4),a
+        add a,16
+        ld (buffer+8),a
+        ld (buffer+12),a
+        jr .2
+
+.1:
+        ld a,$d1
+        ld (buffer),a
+        ld (buffer+4),a
+        ld (buffer+8),a
+        ld (buffer+12),a
+.2:
+        ld a,(view)
+        or a
+        jr z,.3
+        ld a,(x2)
+        ld (buffer+17),a
+        ld (buffer+25),a
+        add a,16
+        ld (buffer+21),a
+        ld (buffer+29),a
+        ld a,(y2)
+        dec a
+        ld (buffer+16),a
+        ld (buffer+20),a
+        add a,16
+        ld (buffer+24),a
+        ld (buffer+28),a
+        jr .4
+
+.3:
+        ld a,$d1
+        ld (buffer+16),a
+        ld (buffer+20),a
+        ld (buffer+24),a
+        ld (buffer+28),a
+.4:
+
+        halt
+        ld hl,buffer
+        ld de,$3f80
+        ld bc,$0020
+        call LDIRVM
+
+        ld a,(y)
+        cp T_CENTER_Y+1
+        jr nz,.30
+        ld a,(speed)
+        cp $ff
+        jr nz,.30
+.32:    ld a,1
+        ld (beep),a
+        jr .31
+
+.30:    ld a,(y)
+        cp T_CENTER_Y-1
+        jr nz,.31
+        ld a,(speed)
+        cp $01
+        jr z,.32
+.31:
+        call play_beep
+
+        ld a,(y)
+        cp T_CENTER_Y
+        jr nz,.18
+        ld a,$06
+.21:
+        ld (buffer+3),a
+        ld (buffer+7),a
+        ld (buffer+11),a
+        ld (buffer+15),a
+        ld (buffer+19),a
+        ld (buffer+23),a
+        ld (buffer+27),a
+        ld (buffer+31),a
+        jr .19
+
+.18:    cp T_CENTER_Y+1
+        jr nz,.20
+        cp T_CENTER_Y-1
+        jr nz,.20
+        ld a,$02
+        jr .21
+
+.20:    cp T_CENTER_Y+2
+        jr nz,.19
+        cp T_CENTER_Y-2
+        jr nz,.19
+        ld a,$0f
+        jr .21
+.19:
+
+        ld a,(debounce)
+        or a
+        jr z,$+6
+        dec a
+        ld (debounce),a
+        call read_joystick_button
+
+        bit 6,a         ; Left-side button.
+        jp nz,.9
+        ld a,(change)
+        or a
+        jp z,.24
+        ld a,(pos)
+        ld e,a
+        ld d,0
+        ld a,(speed)
+        or a
+        jp p,.11
+        ld a,(y)
+        sub T_CENTER_Y
+        neg
+        jr .12
+
+.11:    ld a,(y)
+        sub T_CENTER_Y
+.12:    or a
+        jp m,.loop
+        push af
+        ld hl,buffer+32
+        add hl,de
+        ld (hl),a
+        ld a,(pos)
+        ld d,a
+        ld e,0
+        ld hl,buffer+42
+        ld (hl),'O'
+        inc hl
+        ld (hl),'f'
+        inc hl
+        ld (hl),'f'
+        inc hl
+        ld (hl),'s'
+        inc hl
+        ld (hl),'e'
+        inc hl
+        ld (hl),'t'
+        inc hl
+        ld (hl),' '
+        inc hl
+        ld a,(pos)
+        cp 9
+        jr nz,.16
+        ld (hl),'1'
+        inc hl
+        ld (hl),'0'
+        inc hl
+        jr .17
+.16:    add a,$31
+        ld (hl),a
+        inc hl
+.17:    ld (hl),':'
+        inc hl
+        ld (hl),' '
+        inc hl
+        pop af
+        cp 1
+        push af
+        ld b,$30-1
+        inc b
+        sub 10
+        jr nc,$-3
+        add a,10+$30
+        push af
+        ld a,b
+        cp $30
+        jr z,$+4
+        ld (hl),b
+        inc hl
+        pop af
+        ld (hl),a
+        inc hl
+        ld (hl),' '
+        inc hl
+        ld (hl),'f'
+        inc hl
+        ld (hl),'r'
+        inc hl
+        ld (hl),'a'
+        inc hl
+        ld (hl),'m'
+        inc hl
+        ld (hl),'e'
+        inc hl
+        pop af
+        jr z,$+5
+        ld (hl),'s'
+        inc hl
+        ld (hl),0
+
+        ld hl,buffer+42
+        ld a,$21
+        call show_message
+
+        ld a,(pos)
+        inc a
+        ld (pos),a
+        cp 10
+        jp nc,.15
+        xor a
+        ld (change),a
+
+.14:
+        jp .24
+
+.9:
+        bit 7,a         ; Right-side button.
+        jr nz,.10
+        ld a,(debounce)
+        or a
+        jp nz,.24
+        ld a,15
+        ld (debounce),a
+        ld a,(view)
+        inc a
+        cp 3
+        jr nz,$+3
+        xor a
+        ld (view),a
+        jp .24
+
+.10:
+        bit 4,a
+        jr nz,.22
+        ld a,(debounce)
+        or a
+        jp nz,.loop
+        ld a,15
+        ld (debounce),a
+        ld a,(variation)
+        xor 1
+        ld (variation),a
+        or a
+        jp nz,.24
+        xor a
+        ld (vary),a
+        jp .24
+
+.22:
+        cpl
+        and $20
+        jp nz,.15
+.24:
+        ld a,(vary)
+        add a,T_CENTER_Y+36+1
+        ld b,a
+        ld a,(y)
+        cp b
+        jr c,.5
+        ld a,-1
+        ld (speed),a
+        ld a,1
+        ld (change),a
+        ld a,(variation)
+        or a
+        jr z,.5
+        ld a,r
+        rrca
+        jr c,.6
+        and $07
+        ld (vary),a
+        jr .5
+.6:
+        and $07
+        neg
+        ld (vary),a
+.5:
+        ld a,(vary)
+        add a,T_CENTER_Y-36
+        ld b,a
+        ld a,(y)
+        cp b
+        jr nc,.7
+        ld a,1
+        ld (speed),a
+        ld a,1
+        ld (change),a
+        ld a,(variation)
+        or a
+        jr z,.7
+        ld a,r
+        rrca
+        jr c,.8
+        and $07
+        ld (vary),a
+        jr .7
+.8:
+        and $07
+        neg
+        ld (vary),a
+.7:
+        ld a,(speed)
+        ld b,a
+        ld a,(y)
+        add a,b
+        ld (y),a
+        ld a,(x2)
+        add a,b
+        ld (x2),a
+        jp .loop
+
+
+        ; Done
+.15:   
+        ld a,0
+        call set_volume
+
+        ld a,15
+        ld (debounce),a
+        call reload_menu
+
+        ld a,(pos)
+        cp 10
+        jp nz,video_menu
+
+        ld hl,0
+        ld (total),hl
+        ld b,0
+.23:    push bc
+        ld hl,buffer+32
+        ld a,l
+        add a,b
+        ld l,a
+        jr nc,$+3
+        inc h
+        ld a,(hl)
+        or a
+        ld a,$ce
+        jr z,$+4
+        ld a,$1e
+        ld (acc),a
+        ld e,(hl)
+        ld d,0
+        ld hl,(total)
+        add hl,de
+        ld (total),hl
+        ld a,e
+        ld b,$30-1
+        inc b
+        sub 10
+        jr nc,$-3
+        add a,10+$30
+        ld hl,buffer
+        push af
+        ld a,b
+        cp $30
+        ld (hl),b
+        jr nz,$+4
+        ld (hl),$20
+        inc hl
+        pop af
+        ld (hl),a
+        inc hl
+        ld (hl),0
+        pop bc
+        push bc
+        ld a,b
+        add a,$08
+        ld d,a
+        ld e,$28
+        ld a,(acc)
+        ld hl,buffer
+        call show_message
+        pop bc
+        inc b
+        ld a,b
+        cp 10
+        jp nz,.23
+
+        ld hl,.message_5
+        ld de,$0c20
+        ld a,$6e
+        call show_message
+        ld hl,.message_6
+        ld de,$1220
+        ld a,$6e
+        call show_message
+
+        ld hl,(total)
+        ld ix,buffer
+        call decimal_number
+        ld (ix+0),'/'
+        ld (ix+1),'1'
+        ld (ix+2),'0'
+        ld (ix+3),'='
+        ld de,4
+        add ix,de
+        ld hl,(total)
+        ld bc,-1
+        ld de,-10
+.25:    inc bc
+        add hl,de
+        jr c,.25
+        sbc hl,de
+        push hl
+        push bc
+        pop hl
+        call decimal_number
+        ld (ix+0),'.'
+        pop hl
+        ld a,l
+        add a,$30
+        ld (ix+1),a
+        ld (ix+2),' '
+        ld (ix+3),'a'
+        ld (ix+4),'v'
+        ld (ix+5),'g'
+        ld (ix+6),'.'
+        ld (ix+7),'f'
+        ld (ix+8),'r'
+        ld (ix+9),'a'
+        ld (ix+10),'m'
+        ld (ix+11),'e'
+        ld (ix+12),'s'
+        ld (ix+13),0
+        ld hl,buffer
+        ld de,$1320
+        ld a,$1e
+        call show_message
+
+        ld ix,buffer
+        ld (ix+0),$7e
+        ld (ix+1),'='
+        ld bc,(total)
+        ld a,(frames_per_sec)
+        cp 60
+        ld de,167
+        jr z,$+5
+        ld de,200
+        ld hl,0
+.26:    ld a,b
+        or c
+        jr z,.27
+        add hl,de
+        dec bc
+        jr .26
+
+.27:
+        ld bc,-1
+        ld de,-10
+.33:    inc bc
+        add hl,de
+        jr c,.33
+        sbc hl,de
+        ld h,b
+        ld l,c
+
+        ld bc,-1
+        ld de,-10
+.28:    inc bc
+        add hl,de
+        jr c,.28
+        sbc hl,de
+        inc ix
+        inc ix
+        push hl
+        push bc
+        pop hl
+        call decimal_number
+        ld (ix+0),'.'
+        pop hl
+        ld a,l
+        add a,$30
+        ld (ix+1),a
+        ld (ix+2),' '
+        ld (ix+3),'m'
+        ld (ix+4),'s'
+        ld (ix+5),'.'
+        ld (ix+6),0
+        ld hl,buffer
+        ld de,$1440
+        ld a,$1e
+        call show_message
+
+        ld hl,.message_7
+        ld de,$0940
+        ld a,$1e
+        call show_message
+
+        ld hl,.message_8
+        ld de,$0a40
+        ld a,$1e
+        call show_message
+
+        ld hl,.message_9
+        ld de,$0c40
+        ld a,$4e
+        call show_message
+
+        ld a,(frames_per_sec)
+        cp 60
+        ld hl,.message_10
+        jr z,$+5
+        ld hl,.message_11
+        ld de,$0d40
+        ld a,$4e
+        call show_message
+
+        ld hl,(total)
+        ld de,5
+        or a
+        sbc hl,de
+        jr nc,.29
+        ld hl,(total)
+        ld a,h
+        or l
+        ld hl,.message_15
+        jr z,$+5
+        ld hl,.message_14
+        ld de,$1520
+        ld a,$ce
+        call show_message
+.29:
+.loop2:
+        halt
+        call read_joystick_button_debounce
+        cpl
+        and $e0
+        jp z,.loop2
+
+        ld a,15
+        ld (debounce),a
+
+        jp video_menu
+
+.sprtoscr:
+        call .sprtoscr1
+.sprtoscr1:
+        call nmi_off
+        push de
+        push hl
+        ld bc,8
+        call LDIRVM
+        pop hl
+        ld bc,8
+        add hl,bc
+        pop de
+        inc d
+        push de
+        push hl
+        ld bc,8
+        call LDIRVM
+        pop hl
+        ld bc,8
+        add hl,bc
+        pop de
+        dec d
+        ld a,e
+        add a,8
+        ld e,a
+        jp nmi_on
+
+.fixed:
+        db $4f,$70,$00,$0f
+        db $4f,$80,$04,$0f
+        db $5f,$70,$08,$0f
+        db $5f,$80,$0c,$0f
+
+.message_1:
+        db "Press left-side button when the sprite is",0
+.message_2:
+        db "aligned with the background.",0
+.message_3:
+        db "Negative values means you pressed",0
+.message_4:
+        db "prematurely.",0
+.message_5:
+        db "+",0
+.message_6:
+        db "------",0
+.message_7:
+        db "Keep in mind this",0
+.message_8:
+        db "isn't a lag test.",0
+.message_9:
+        db "A frame is around",0
+.message_10:
+        db "16.7 ms.",0
+.message_11:
+        db "20.0 ms.",0
+
+.message_14:
+        db "EXCELLENT REFLEXES!",0
+.message_15:
+        db "INCREDIBLE REFLEXES!",0
+
+        ;
+        ; Draw Stripes.
+        ;
 draw_stripes:
         call DISSCR
         call clear_sprites

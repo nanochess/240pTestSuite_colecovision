@@ -3,11 +3,17 @@
 Original program by Artemio Urbina.
 Colecovision version by Oscar Toledo G.
 
-Last revision: Dec/23/2023.
+Last revision: Dec/26/2023.
 
 Choose items from the menu by moving the stick up and down using any controller.
 
 Select item by pressing any side-buttons on any controller.
+
+Notes for MSX:
+
+Left-side button is space or button 1. Right-side button is M or button 2.
+
+Keypad # is mapped to keyboard Z. Keypad * is mapped to keyboard X.
 
 *** Test Patterns > Color Bleed Check.
 
@@ -77,6 +83,24 @@ Press key # to show frame count.
 
 Press key * to exit test.
 
+*** Video tests > Lag Test.
+
+This test is used to do a comparison against a monitor with known lag. A picture is taken in order to do a comparison of both monitors.
+
+Press any side button or the key * to exit test.
+
+*** Video tests > Timing & Reflex Test.
+
+An empirical lag test based on visual and audio cues.
+
+Press the left side button when the moving sprite is aligned with the fixed sprite. After 10 times the results are shown.
+
+Press the right side button to change the moving sprite to vertical/horizontal movement or to show both.
+
+Press key # to remove random variation.
+
+Press key * to exit test.
+
 *** Video tests > Grid scroll.
 
 Move stick up and down to accelerate or reduce speed.
@@ -101,9 +125,17 @@ Press key # to show frame count.
 
 Press key * to exit test.
 
+*** Audio test > Sound test
+
+It emits an approximate audio frequency of 1000 hz.
+
+Press key * to exit test.
+
 *** Hardware > Controller test.
 
-Show hardware values of controller ports.
+Show hardware values of controller ports (Colecovision)
+
+Currently not working on MSX.
 
 Press both side buttons on any controller to exit test.
 

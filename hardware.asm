@@ -8,10 +8,12 @@
         ;
 
 menu_hardware:
+    if COLECO
         dw $0820
         db "*Controller Test",0
         dw $0920
         db "*BIOS data",0
+    endif
         dw $0a20
         db "*Memory Viewer",0
         dw $0c20
@@ -24,10 +26,12 @@ hardware_menu:
         call build_menu
 
         or a
+    if COLECO
         jp z,controller_test
-        cp 1
+        dec a
         jp z,bios_test
-        cp 2
+        dec a
+    endif
         jp z,memory_viewer
 
         jp main_menu
@@ -132,11 +136,31 @@ bios_test:
         ld a,$4e
         call show_message
 
+    if COLECO
         call crc32_init
         ld hl,$0000
         ld bc,$2000
         call crc32_calculate
         call crc32_final
+    endif
+        ; Not enabled, as databases are based on a SHA1 hash.
+    if MSX
+        ld a,$c9
+	ld ($fd9a),a
+        ld a,(bios_rom)
+        ld h,$40
+        call ENASLT     ; Map into $4000-$7FFF
+        call crc32_init
+        ld hl,$0000
+        ld bc,$8000
+        call crc32_calculate
+        call crc32_final
+        ld a,(cartridge_rom)
+        ld h,$40
+        call ENASLT     ; Map into $4000-$7FFF
+        ld a,$c3
+	ld ($fd9a),a
+    endif
 
         ld ix,buffer
         ld a,d
@@ -158,6 +182,7 @@ bios_test:
         pop hl
         pop de
 
+    if COLECO
         ld ix,goodcol_data
         ld b,4
 .0:
@@ -195,6 +220,7 @@ bios_test:
         ld a,$1e
         call show_message
 
+    endif
 .2:     halt
         call read_joystick_button_debounce
         cpl
