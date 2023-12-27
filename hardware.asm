@@ -5,6 +5,8 @@
         ; Colecovision version by Oscar Toledo G. @nanochess
         ;
         ; Creation date: Dec/20/2023.
+        ; Revision date: Dec/27/2023. Coleco controller test now shows
+        ;                             graphical display for controllers.
         ;
 
 menu_hardware:
@@ -36,89 +38,161 @@ hardware_menu:
 
         jp main_menu
 
+    if COLECO
+CONTROLLER_BASE:        EQU $0928    
+CONTROLLER_SEPARATION:  EQU $0020
+
 controller_test:
         call clean_menu
 
-        ld hl,hardware_msg_2
-        ld de,$0820
-        ld a,$4e
-        call show_message
-        ld hl,hardware_msg_3
-        ld de,$0920
-        ld a,$4e
-        call show_message
-        ld hl,hardware_msg_4
-        ld de,$0a20
-        ld a,$4e
-        call show_message
+        ld hl,CONTROLLER_BASE-$0100
+        ld b,$0a
+.1:     push bc
+        push hl
+        set 5,h
+        ld bc,$0028+CONTROLLER_SEPARATION+$0028
+        ld a,$ee
+        call nmi_off
+        call FILVRM
+        call nmi_on
+        pop hl
+        pop bc
+        inc h
+        djnz .1
+
+        ld hl,controller_dat
+        ld de,CONTROLLER_BASE
+        ld b,9
+.2:     push bc
+        push hl
+        push de
+        ld bc,$0028
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        pop hl
+        pop de
+        push de
+        push hl
+        ld bc,$0028+CONTROLLER_SEPARATION
+        add hl,bc
+        ex de,hl
+        ld bc,$0028
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        pop de
+        inc d
+        pop hl
+        ld bc,$0028
+        add hl,bc
+        pop bc
+        djnz .2
+
+        ld hl,controller_dat+18*40
+        ld de,CONTROLLER_BASE+$2000
+        ld b,9
+.3:     push bc
+        push hl
+        push de
+        ld bc,$0028
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        pop hl
+        pop de
+        push de
+        push hl
+        ld bc,$0028+CONTROLLER_SEPARATION
+        add hl,bc
+        ex de,hl
+        ld bc,$0028
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        pop de
+        inc d
+        pop hl
+        ld bc,$0028
+        add hl,bc
+        pop bc
+        djnz .3
+
         ld hl,hardware_msg_5
-        ld de,$0b20
-        ld a,$4e
+        ld de,CONTROLLER_BASE-$0100
+        ld a,$6e
         call show_message
         ld hl,hardware_msg_6
-        ld de,$0d20
+        ld de,$1320
         ld a,$1e
         call show_message
         ld hl,hardware_msg_7
-        ld de,$0e20
+        ld de,$1420
         ld a,$1e
         call show_message
+        ld hl,buffer
+        ld b,72
+        ld (hl),0
+        inc hl
+        djnz $-3
 .0:
         halt
 
-    if COLECO
         out (KEYSEL),a
         ex (sp),hl
         ex (sp),hl
         in a,(JOY1)
-        ld ix,buffer
-        call generate_hex
-        ld (ix+0),0
-
+        ld b,a
+        out (JOYSEL),a
+        ex (sp),hl
+        ex (sp),hl
+        in a,(JOY1)
+        ld c,a
         ld hl,buffer
-        ld de,$0860
-        ld a,$1e
-        call show_message
+        call .decode
 
         out (KEYSEL),a
         ex (sp),hl
         ex (sp),hl
         in a,(JOY2)
-        ld ix,buffer
-        call generate_hex
-        ld (ix+0),0
-
-        ld hl,buffer
-        ld de,$0960
-        ld a,$1e
-        call show_message
-
-        out (JOYSEL),a
-        ex (sp),hl
-        ex (sp),hl
-        in a,(JOY1)
-        ld ix,buffer
-        call generate_hex
-        ld (ix+0),0
-
-        ld hl,buffer
-        ld de,$0a60
-        ld a,$1e
-        call show_message
-
+        ld b,a
         out (JOYSEL),a
         ex (sp),hl
         ex (sp),hl
         in a,(JOY2)
-        ld ix,buffer
-        call generate_hex
-        ld (ix+0),0
+        ld c,a
+        ld hl,buffer+18
+        call .decode
 
-        ld hl,buffer
-        ld de,$0b60
-        ld a,$1e
-        call show_message
-    endif
+        ld de,buffer
+        ld hl,buffer+36
+        ld b,18
+.4:     ld a,(de)
+        cp (hl)
+        jr z,.5
+        ld (hl),a
+        push hl
+        ld hl,CONTROLLER_BASE
+        call .update
+        pop hl
+.5:     inc de
+        inc hl
+        djnz .4
+
+        ld de,buffer+18
+        ld hl,buffer+54
+        ld b,18
+.6:     ld a,(de)
+        cp (hl)
+        jr z,.7
+        ld (hl),a
+        push hl
+        ld hl,CONTROLLER_BASE+$0028+CONTROLLER_SEPARATION
+        call .update
+        pop hl
+.7:     inc de
+        inc hl
+        djnz .6
 
         call read_joystick_button_debounce
         and $c0
@@ -127,6 +201,122 @@ controller_test:
         ld a,15
         ld (debounce),a
         jp hardware_menu
+
+.decode:
+        push hl
+        ld a,18
+        ld (hl),0
+        inc hl
+        dec a
+        jr nz,$-4
+        ld a,b
+        and $0f
+        ld e,a
+        ld d,0
+        ld hl,.table
+        add hl,de
+        ld a,(hl)
+        or a
+        pop hl
+        jp m,.d1
+        push hl
+        ld e,a
+        ld d,0
+        add hl,de
+        ld (hl),$01
+        pop hl
+.d1:    ld de,12
+        add hl,de
+        bit 6,b
+        jr nz,$+4
+        ld (hl),1
+        inc hl
+        bit 6,c
+        jr nz,$+4
+        ld (hl),1
+        inc hl
+        bit 0,c
+        jr nz,$+4
+        ld (hl),1
+        inc hl
+        bit 1,c
+        jr nz,$+4
+        ld (hl),1
+        inc hl
+        bit 2,c
+        jr nz,$+4
+        ld (hl),1
+        inc hl
+        bit 3,c
+        jr nz,$+4
+        ld (hl),1
+        inc hl
+        ret
+
+.table:
+        ;                  SA1
+        db $ff,$08,$04,$05,$ff,$07,$0b,$02
+        ;  SA2
+        db $ff,$0a,$00,$09,$03,$01,$06,$ff
+
+.update:
+        push bc
+        push de
+        or a
+        ld de,controller_dat-40
+        jr z,$+5
+        ld de,controller_dat+9*40-40
+        push de
+        push hl
+        ld a,18
+        sub b
+        ld hl,.reference
+        ld e,a
+        ld d,0
+        add hl,de
+        ld a,(hl)
+        pop hl
+        pop de
+        dec h
+.u1:
+        inc h
+        ex de,hl
+        ld bc,40
+        add hl,bc
+        ex de,hl
+        sub 5
+        jr nc,.u1
+        add a,5
+        add a,a ; x2
+        add a,a ; x4
+        add a,a ; x8
+        ld c,a
+        ld b,0
+        add hl,bc
+        ex de,hl
+        add hl,bc
+        push de
+        push hl
+        ld bc,$0008
+        call nmi_off
+        call LDIRVM
+        pop hl
+        pop de
+        set 5,d
+        ld bc,18*40
+        add hl,bc
+        ld bc,$0008
+        call LDIRVM
+        call nmi_on
+        pop de
+        pop bc
+        ret
+
+.reference:
+        db $25,$15,$16,$17,$1a,$1b,$1c,$1f
+        db $20,$21,$24,$26,$13,$0f,$02,$08
+        db $0c,$06
+    endif
 
 bios_test:
         call clean_menu
@@ -353,16 +543,8 @@ goodcol_data:
 
 hardware_msg_1:
         db "BIOS CRC32:",0
-
-hardware_msg_2:
-        db "Keypad 1:",0
-hardware_msg_3:
-        db "Keypad 2:",0
-hardware_msg_4:
-        db "Stick 1:",0
 hardware_msg_5:
-        db "Stick 2:",0
-
+        db "   1           2",0
 hardware_msg_6:
         db "Press both side-buttons",0
 hardware_msg_7:

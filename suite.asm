@@ -665,7 +665,7 @@ credits_text:
         dw $1120
         db $1e,"http://junkerhq.net/xrgb",0
         dw $1520
-        db $fe,"Build date: Dec/26/2023",0
+        db $fe,"Build date: Dec/27/2023",0
         dw $0000
 
 reload_menu:
@@ -1434,6 +1434,11 @@ monoscope1:
 
         include "hardware.asm"
 
+    if COLECO
+controller_dat:
+        incbin "controller.dat"
+    endif
+
         include "crc32.asm"
 
 rom_end:
@@ -1453,7 +1458,7 @@ cartridge_rom:  rb 1    ; MSX.
 debounce:       rb 1
 letters_bitmaps:        rb 2
 
-buffer:         rb 64
+buffer:         rb 72
                           
 alternate:      rb 1
 invert:         rb 1
@@ -1482,7 +1487,7 @@ pos:            rb 1    ; timing_reflex_test
 total:          rb 2    ; timing_reflex_test
 beep:           rb 1    ; timing_reflex_test
 
-bitmap_letters: equ ram_base+$0100
+bitmap_letters: equ ram_base+$0200
 
 ram_end:
 

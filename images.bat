@@ -21,4 +21,4 @@ tmscolor -s lag-per.bmp lag-per.dat
 tmscolor -c1 -m monoscope.bmp monoscope.dat
 pletter monoscope.dat 0 6144 monoscope0.bin
 pletter monoscope.dat 6144 6144 monoscope1.bin
-
+tmscolor -c1 controller.bmp controller.dat
