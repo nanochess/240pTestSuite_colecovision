@@ -21,11 +21,11 @@ This patterns helps diagnose unneeded color up-sampling. It consists of one pixe
 
 You can change the vertical bars to a checkerboard by pressing the left side button.
 
-*** Test Patterns > Circles.
+*** Test Patterns > Monoscope
 
-Displays five circles for monitor adjustments.
+Displays a pattern arrangement for monitor alignment.
 
-The aspect ratio has been measured with calibrated NTSC monitors to make sure these are circles and not ellipses.
+The aspect ratio has been measured with calibrated NTSC monitors to make sure the red lines make a square.
 
 *** Test Patterns > Grid
 

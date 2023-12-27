@@ -665,7 +665,7 @@ credits_text:
         dw $1120
         db $1e,"http://junkerhq.net/xrgb",0
         dw $1520
-        db $fe,"Build date: Dec/25/2023",0
+        db $fe,"Build date: Dec/26/2023",0
         dw $0000
 
 reload_menu:
@@ -681,6 +681,7 @@ reload_menu:
         call WRTVDP
         call nmi_on
 
+        call clear_sprites
         call highres
         ld hl,title0
         ld de,$0000
@@ -1426,6 +1427,10 @@ digits:
         incbin "digits.dat"
 lag_per:
         incbin "lag-per.dat"
+monoscope0:
+        incbin "monoscope0.bin"
+monoscope1:
+        incbin "monoscope1.bin"
 
         include "hardware.asm"
 

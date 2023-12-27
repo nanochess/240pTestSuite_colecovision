@@ -7,13 +7,16 @@
         ; Creation date: Dec/22/2023.
         ; Revision date: Dec/23/2023. Added grid, white, and sharpness
         ;                             patterns.
+        ; Revision date: Dec/26/2023. Added monoscope.
         ;
 
 menu_patterns:
         dw $0820
         db "*Color Bleed Check",0
+;        dw $0920
+;        db "*Pretty Non-useful Circles",0
         dw $0920
-        db "*Circles",0
+        db "*Monoscope",0
         dw $0a20
         db "*Grid",0
         dw $0b20
@@ -33,8 +36,10 @@ patterns_menu:
 
         or a
         jp z,patterns_color_bleed
+;        dec a
+;        jp z,patterns_circles
         dec a
-        jp z,patterns_circles
+        jp z,patterns_monoscope
         dec a
         jp z,patterns_grid
         dec a
@@ -180,6 +185,142 @@ patterns_circles:
 
         call reload_menu
         jp patterns_menu
+
+patterns_monoscope:
+        call DISSCR
+        call clear_sprites
+        call highres
+        ld hl,monoscope0
+        ld de,$0000
+        call unpack
+        ld hl,monoscope1
+        ld de,$2000
+        call unpack
+        ld hl,.vertical_line
+        ld de,$1800
+        ld bc,$0040
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        ld hl,.vertical_sprites
+        ld de,$3f80
+        ld bc,16*4
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        call ENASCR
+        ld a,2
+        ld (alternate),a
+.1:
+        halt
+        call read_joystick_button_debounce
+        bit 1,a
+        jr nz,.2
+        ld a,15
+        ld (debounce),a
+        ld a,(alternate)
+        cp 2
+        jr z,$+3
+        inc a
+        ld (alternate),a
+        call .change_color
+        jr .1
+
+.2:     bit 3,a
+        jr nz,.3
+        ld a,15
+        ld (debounce),a
+        ld a,(alternate)
+        or a
+        jr z,$+3
+        dec a
+        ld (alternate),a
+        call .change_color
+        jr .1
+
+.3:
+        cpl
+        and $e0
+        jr z,.1
+        ld a,15
+        ld (debounce),a
+
+        call reload_menu
+        jp patterns_menu
+
+.change_color:
+        ld a,(alternate)
+        cp 1
+        ld c,$11
+        jr c,.4
+        ld c,$e1
+        jr z,.4
+        ld c,$f1
+.4:
+        ld hl,$2000
+        ld b,24
+.5:
+        call nmi_off
+        call .do256
+        call nmi_on
+        djnz .5
+        ret
+
+.do256:
+        push hl
+        push bc
+        ld de,bitmap_letters
+        ld bc,$0100
+        call LDIRMV
+        pop bc
+        ld hl,bitmap_letters
+.loop:
+        ld a,(hl)
+        cp $61
+        jr z,$+3
+        ld (hl),c
+        inc l
+        jp nz,.loop
+        pop hl
+        push bc
+        push hl
+        ex de,hl
+        ld hl,bitmap_letters
+        ld bc,$0100
+        call LDIRVM
+        pop hl
+        pop bc
+        inc h
+        ret
+
+.vertical_line:
+        db $80,$80,$80,$80,$80,$80,$80,$80
+        db $80,$80,$80,$80,$80,$80,$80,$80
+        db $00,$00,$00,$00,$00,$00,$00,$00
+        db $00,$00,$00,$00,$00,$00,$00,$00
+
+        db $80,$80,$80,$80,$00,$00,$00,$00
+        db $00,$00,$00,$00,$00,$00,$00,$00
+        db $00,$00,$00,$00,$00,$00,$00,$00
+        db $00,$00,$00,$00,$00,$00,$00,$00
+
+.vertical_sprites:
+        db 38-1,76,$00,$06
+        db 54-1,76,$00,$06
+        db 70-1,76,$00,$06
+        db 86-1,76,$00,$06
+        db 102-1,76,$00,$06
+        db 118-1,76,$00,$06
+        db 134-1,76,$00,$06
+        db 150-1,76,$04,$06
+        db 38-1,179,$00,$06
+        db 54-1,179,$00,$06
+        db 70-1,179,$00,$06
+        db 86-1,179,$00,$06
+        db 102-1,179,$00,$06
+        db 118-1,179,$00,$06
+        db 134-1,179,$00,$06
+        db 150-1,179,$04,$06
 
 patterns_grid:
         call DISSCR
