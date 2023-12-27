@@ -1,5 +1,6 @@
 @echo off
 tmscolor -c1 -t80 bars1.bmp bars1.dat
+tmscolor -c1 -tc0 bars2.bmp bars2.dat
 tmscolor -c1 circles.bmp circles.dat
 pletter circles.dat 0 6144 circles0.bin
 tmscolor -c1 sharpness.bmp sharpness.dat

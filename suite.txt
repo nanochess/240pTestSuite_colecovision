@@ -55,6 +55,8 @@ In some PVM/BVM displays this is also referred to as aperture.
 
 Display all the VDP colors in a column arrangement.
 
+Press the left-side button to switch to a row arrangement.
+
 TODO: Measure voltage levels.
 
 *** Video tests > Drop Shadow Test.

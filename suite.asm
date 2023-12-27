@@ -9,7 +9,7 @@
         ; Revision date: Dec/25/2023. Now it works in MSX.
         ; Revision date: Dec/26/2023. Added minimal support for audio.
         ;
-
+            
 COLECO: equ 1   ; Define this to 1 for Colecovision
 MSX:    equ 0   ; Define this to 1 for MSX
 

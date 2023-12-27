@@ -7,7 +7,8 @@
         ; Creation date: Dec/22/2023.
         ; Revision date: Dec/23/2023. Added grid, white, and sharpness
         ;                             patterns.
-        ; Revision date: Dec/26/2023. Added monoscope.
+        ; Revision date: Dec/26/2023. Added monoscope. Optional row
+        ;                             arrangement for VDP Color Bars.
         ;
 
 menu_patterns:
@@ -561,6 +562,20 @@ patterns_vdp_color_bars:
         call nmi_off
         call LDIRVM3
         call nmi_on
+
+        ld hl,bars4_dat
+        ld de,$2600
+        ld bc,$00c0
+        call nmi_off
+        call LDIRVM3
+        call nmi_on
+        ld hl,bars3_dat
+        ld de,$0600
+        ld bc,$00c0
+        call nmi_off
+        call LDIRVM3
+        call nmi_on
+
         ld hl,bars2_dat
         ld de,$3800
         ld bc,$0300
@@ -573,9 +588,29 @@ patterns_vdp_color_bars:
         call nmi_on
         call ENASCR
 
+        xor a
+        ld (alternate),a
 .1:
         halt
         call read_joystick_button_debounce
+        bit 6,a
+        jr nz,.2
+        ld a,15
+        ld (debounce),a
+        ld a,(alternate)
+        xor 1
+        ld (alternate),a
+        or a
+        ld hl,bars2_dat
+        jr z,$+5
+        ld hl,bars5_dat
+        ld de,$3800
+        ld bc,$0300
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        jr .1
+.2:
         cpl
         and $e0
         jr z,.1
@@ -594,4 +629,10 @@ bars1_dat:
         incbin "bars1.dat",$0c00,$0080
 bars2_dat:
         incbin "bars1.dat",$1000,$0300
+bars3_dat:
+        incbin "bars2.dat",$0600,$00c0
+bars4_dat:
+        incbin "bars2.dat",$0e00,$00c0
+bars5_dat:
+        incbin "bars2.dat",$1000,$0300
 
