@@ -27,6 +27,8 @@ Displays a pattern arrangement for monitor alignment.
 
 The aspect ratio has been measured with calibrated NTSC monitors to make sure the red lines make a square.
 
+Move the stick to the left and right to change the white lines to gray and black.
+
 *** Test Patterns > Grid
 
 Displays a grid borrowed from the CPS-2 grid. It is used to determine how many pixels are hidden in the border of the screen.
