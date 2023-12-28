@@ -4,17 +4,17 @@
 
 Your options to use the suite.rom file are:
 
-* Your favorite Colecovision/MSX emulator (BlueMSX or CoolCV).
+* Your favorite Colecovision/MSX/SG1000 emulator (BlueMSX or CoolCV).
 * Load the file into a flash cartridge like the AtariMAX Ultimate SD Colecovision cartridge.
-* Program the file into an EPROM and put it into a cartridge PCB for Colecovision.
+* Program the file into an EPROM and put it into a cartridge PCB for Colecovision/MSX/SG1000.
 
-Detailed usage instructions are in the suite.txt file.
+Detailed usage instructions are in the Suite_manual.md file.
 
 ### How to assemble
 
-You require tniASM v0.44 or v0.45 available freely from [http://www.tni.nl/products/tniasm.html](http://www.tni.nl/products/tniasm.html)
+For assembling yourself the source code, you require tniASM v0.44 or v0.45 available freely from [http://www.tni.nl/products/tniasm.html](http://www.tni.nl/products/tniasm.html)
 
-You only need to assemble the file suite.asm and it includes all the other required files (edit the COLECO or MSX label accordingly).
+You only need to assemble the file suite.asm and it includes all the other required files (edit the COLECO, MSX or SG1000 label accordingly).
 
 There are some files coming from the development environment (WinXP) that create the required images (images.bat) and assemble the code (e.bat).
 
