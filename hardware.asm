@@ -503,7 +503,7 @@ memory_viewer:
         jp .1
 
 .7:     cpl
-        and $c0
+        and $e0
         jp z,.5
         call reload_menu
         jp hardware_menu

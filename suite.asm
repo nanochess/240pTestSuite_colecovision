@@ -8,23 +8,27 @@
         ; Revision date: Dec/22/2023. Moved patterns test to its own file.
         ; Revision date: Dec/25/2023. Now it works in MSX.
         ; Revision date: Dec/26/2023. Added minimal support for audio.
+        ; Revision date: Dec/28/2023. It can exit menus with #. Now it works
+        ;                             in SG1000, also added my font bitmaps
+        ;                             because SG1000 doesn't have any.
         ;
             
 COLECO: equ 1   ; Define this to 1 for Colecovision
 MSX:    equ 0   ; Define this to 1 for MSX
+SG1000: equ 0   ; Define this to 1 for SG1000
 
-ram_base:       equ $E000-$7000*COLECO
-VDP:            equ $98+$26*COLECO
+ram_base:       equ $E000-$7000*COLECO-$2000*SG1000
+VDP:            equ $98+$26*COLECO+$26*SG1000
                          
-TURN_OFF_SOUND: EQU $1FD6
-
-PSG:    equ $ff
-JOY1:   equ $fc
-JOY2:   equ $ff
+PSG:    equ $ff-$80*SG1000
+JOY1:   equ $fc-$20*SG1000
+JOY2:   equ $ff-$22*SG1000
 
     if COLECO
-
+                              
         fname "suitecv.rom"
+
+TURN_OFF_SOUND: EQU $1FD6
 
 KEYSEL: equ $80
 JOYSEL: equ $c0
@@ -54,6 +58,48 @@ JOYSEL: equ $c0
         jp $0000        ; rst $38
 
         jp nmi_handler  ; NMI
+    endif
+
+    if SG1000
+
+        fname "suitesg.rom"
+
+        org $0000
+
+        di
+        im 1
+        jp START
+
+        db $ff,$ff
+
+        jp $0000        ; rst $08
+        db $ff,$ff,$ff,$ff,$ff
+
+        jp $0000        ; rst $10
+        db $ff,$ff,$ff,$ff,$ff
+
+        jp $0000        ; rst $18
+        db $ff,$ff,$ff,$ff,$ff
+
+        jp $0000        ; rst $20
+        db $ff,$ff,$ff,$ff,$ff
+
+        jp $0000        ; rst $28
+        db $ff,$ff,$ff,$ff,$ff
+
+        jp $0000        ; rst $30
+        db $ff,$ff,$ff,$ff,$ff
+
+        jp nmi_handler  ; rst $38
+
+        ds $66-$,$ff
+
+        push af
+        ld a,1
+        ld (sg1000_pause),a
+        pop af
+        retn            ; NMI handler (pause)
+
     endif
 
     if MSX
@@ -118,6 +164,8 @@ rotate_slot:
         ret
 
     endif
+
+        db "Powered by @nanochess :) Dec/2023",0
 
 SETWRT:
 	ld a,l
@@ -225,8 +273,8 @@ LDIRMV:
         ; bit 1 = 0 = Right
         ; bit 2 = 0 = Down
         ; bit 3 = 0 = Left
-        ; bit 4 = 0 = #
-        ; bit 5 = 0 = *
+        ; bit 4 = 0 = *
+        ; bit 5 = 0 = #
         ; bit 6 = 0 = Left button (button A)
         ; bit 7 = 0 = Right button (button B)
         ;
@@ -251,10 +299,10 @@ read_joystick_button:
         ld b,a
         ld a,c
         and $0f
-        cp $09          ; Key #
+        cp $09          ; Key *
         jr nz,$+4
         res 4,b
-        cp $06          ; Key *
+        cp $06          ; Key #
         jr nz,$+4
         res 5,b
         out (JOYSEL),a
@@ -293,23 +341,23 @@ read_joystick_button:
         push bc
         call GTTRIG
         pop bc
-        or a
+        or a            ; Space?
         jr z,$+4
         res 6,b
 
         ld a,4
         call SNSMAT
-        bit 2,a
+        bit 2,a         ; M?
         jr nz,$+4
         res 7,b
 
         ld a,5
         call SNSMAT
-        bit 7,a
+        bit 7,a         ; Z?
         jr nz,$+4
         res 4,b
 
-        bit 5,a
+        bit 5,a         ; X?
         jr nz,$+4
         res 5,b
 
@@ -317,7 +365,7 @@ read_joystick_button:
         push bc
         call GTTRIG
         pop bc
-        or a
+        or a            ; Button 1 of joystick 1?
         jr z,$+4
         res 6,b
         
@@ -325,7 +373,7 @@ read_joystick_button:
         push bc
         call GTTRIG
         pop bc
-        or a
+        or a            ; Button 1 of joystick 2?
         jr z,$+4
         res 6,b
         
@@ -333,7 +381,7 @@ read_joystick_button:
         push bc
         call GTTRIG
         pop bc
-        or a
+        or a            ; Button 2 of joystick 1?
         jr z,$+4
         res 7,b
         
@@ -341,13 +389,67 @@ read_joystick_button:
         push bc
         call GTTRIG
         pop bc
-        or a
+        or a            ; Button 2 of joystick 2?
         jr z,$+4
         res 7,b
         
         ld a,b
         pop hl
         pop de
+        pop bc
+    endif
+    if SG1000
+        push bc
+        ld b,$ff
+        in a,(JOY1)
+        bit 0,a
+        jr nz,$+4
+        res 0,b
+        bit 1,a
+        jr nz,$+4
+        res 2,b
+        bit 2,a
+        jr nz,$+4
+        res 3,b
+        bit 3,a
+        jr nz,$+4
+        res 1,b
+        bit 4,a
+        jr nz,$+4
+        res 6,b
+        bit 5,a
+        jr nz,$+4
+        res 7,b
+
+        bit 6,a
+        jr nz,$+4
+        res 0,b
+        bit 7,a
+        jr nz,$+4
+        res 2,b
+
+        in a,(JOY2)
+        bit 0,a
+        jr nz,$+4
+        res 3,b
+        bit 1,a
+        jr nz,$+4
+        res 1,b
+        bit 2,a
+        jr nz,$+4
+        res 4,b
+        bit 3,a
+        jr nz,$+4
+        res 5,b
+
+        ld a,(sg1000_pause)
+        or a
+        jr z,$+4
+        res 5,b
+        xor a
+        ld (sg1000_pause),a
+
+        ld a,b
         pop bc
     endif
         ret
@@ -381,6 +483,9 @@ nmi_off:
     if MSX
         di
     endif
+    if SG1000
+        di
+    endif
         ret
 
         ;
@@ -405,6 +510,10 @@ nmi_on:
         ei
         ret
     endif
+    if SG1000
+        ei
+        ret
+    endif
 
         ;
         ; Handle NMI
@@ -425,24 +534,6 @@ nmi_handler:
         push de
         push ix
 
-;        call emit_sound         
-
-        ld hl,mode
-        bit 3,(hl)
-        jr z,.3
-        ;
-        ; Load sprite attribute table
-        ;
-        ld hl,$3f80
-        call SETWRT
-        ld hl,sprites
-        ld bc,128*256+VDP
-        outi
-        jp nz,$-2
-.3:
-
-;        call generate_sound
-
         ld hl,(frame)
         inc hl
         ld (frame),hl
@@ -456,29 +547,23 @@ nmi_handler:
         retn
     endif
     if MSX
-;        call emit_sound         
-
-        ld hl,mode
-        bit 3,(hl)
-        jr z,.3m
-        ;
-        ; Load sprite attribute table
-        ;
-        ld hl,$3f80
-        call SETWRT
-        ld hl,sprites
-        ld bc,128*256+VDP
-        outi
-        jp nz,$-2
-.3m:
-
-;        call generate_sound
-
         ld hl,(frame)
         inc hl
         ld (frame),hl
 
         in a,(VDP+1)
+        ei
+        ret
+    endif
+    if SG1000
+        push af
+        push hl
+        ld hl,(frame)
+        inc hl
+        ld (frame),hl
+        pop hl
+        in a,(VDP+1)
+        pop af
         ei
         ret
     endif
@@ -514,10 +599,6 @@ START:
         ld a,($0069)    ; Colecovision region info.
         ld (frames_per_sec),a
 
-        ld hl,($006c)   ; Colecovision letters BIOS.
-        ld de,$ff80     ; Back to point to space character.
-        add hl,de
-        ld (letters_bitmaps),hl
     endif
     if MSX
 	ld sp,stack
@@ -553,10 +634,33 @@ START:
         ld h,$80
         call ENASLT     ; Map into $8000-$BFFF
 
-        ld hl,($0004)   ; MSX letters BIOS.
-        ld de,$0100     ; Point to space character.
-        add hl,de
-        ld (letters_bitmaps),hl
+    endif
+    if SG1000
+        ld sp,STACK
+        ld a,$9f
+        out (PSG),a
+        ld a,$bf
+        out (PSG),a
+        ld a,$df
+        out (PSG),a
+        ld a,$ff
+        out (PSG),a
+        call vdp_no_interrupt
+        call vdp_no_interrupt
+
+        ;
+        ; Clear memory
+        ;
+        ld hl,STACK-1
+        xor a
+.2:     ld (hl),a
+        dec hl
+        bit 2,h
+        jr z,.2
+
+        ld a,60         ; SG1000 is Japanese, always 60 frames per second.
+        ld (frames_per_sec),a
+
     endif
 
 ;       call init_sound
@@ -583,7 +687,7 @@ main_menu:
         dec a
         jp z,credits_menu
 
-        jp bug_warning
+        jp main_menu
 
 audio_menu:
         call clean_menu
@@ -640,9 +744,11 @@ credits_menu:
 credits_text:
         dw $0820
         db $4e,"Original Software:",0
-        dw $0920
-        db $1e,"Artemio Urbina",0
-        dw $0a20
+        dw $0928
+        db $de,"Artemio Urbina",0
+        dw $0a30
+        db $1e,"@artemio",0
+        dw $0c20
         db $4e
     if COLECO
         db "Colecovision Developer:",0
@@ -650,22 +756,31 @@ credits_text:
     if MSX
         db "MSX1 Developer:",0
     endif
-        dw $0b20
-        db $1e,"Oscar Toledo G.",0
-        dw $0c20
-        db $4e,"Menu Pixel Art:",0
-        dw $0d20
-        db $1e,"Asher",0
-        dw $0e20
-        db $4e,"SDK:",0
-        dw $0f20
-        db $1e,"tniASM v0.44+DOS Edit",0
+    if SG1000
+        db "SG1000 Developer:",0
+    endif
+        dw $0d28
+        db $de,"Oscar Toledo G.",0
+        dw $0e30
+        db $1e,"@nanochess",0
         dw $1020
-        db $4e,"Using this suite:",0
+        db $4e,"Donna Art:",0
+        dw $1060
+        db $de,"@pepe_salot",0
         dw $1120
-        db $1e,"http://junkerhq.net/xrgb",0
+        db $4e,"Menu Art:",0
+        dw $1160
+        db $de,"@Aftasher",0
+        dw $1220
+        db $4e,"SDK:",0
+        dw $1240
+        db $de,"tniASM v0.44+Edit",0
+        dw $1320
+        db $4e,"Using this suite:",0
+        dw $1420
+        db $de,"http://junkerhq.net/xrgb",0
         dw $1520
-        db $fe,"Build date: Dec/27/2023",0
+        db $ce,"Build date: Dec/28/2023",0
         dw $0000
 
 reload_menu:
@@ -694,7 +809,7 @@ reload_menu:
         call unpack
         ld hl,title3
         ld de,$3f80
-        ld bc,$0018
+        ld bc,$0010
         call nmi_off
         call LDIRVM
         call nmi_on
@@ -744,7 +859,7 @@ decimal_number:
         ret
 
 load_letters:
-        ld hl,(letters_bitmaps)
+        ld hl,font_bitmaps
         ld de,$0100
         ld bc,$0300
         call nmi_off
@@ -830,7 +945,7 @@ build_menu:
         call read_joystick_button_debounce
         ld d,a
         cpl
-        and $c5
+        and $e5
         jr z,.4
 
         ld a,$1e
@@ -869,7 +984,15 @@ build_menu:
         jr nz,$-3
         jr .7
 
-.5:     ld a,15
+.5:     bit 5,d
+        jr nz,.3
+        ld a,15
+        ld (debounce),a
+        ld a,$ff                ; Menu abort.
+        ret
+
+.3:
+        ld a,15
         ld (debounce),a
         ld a,c
         ret
@@ -1001,7 +1124,7 @@ draw_letter:
         add hl,hl
         add hl,hl
         add hl,hl
-        ld bc,(letters_bitmaps)
+        ld bc,font_bitmaps
         add hl,bc
 
         cp $58          ; Patch the X
@@ -1154,6 +1277,11 @@ set_volume:
         ld a,8
         call WRTPSG
     endif
+    if SG1000
+        xor $0f
+        or $90
+        out (PSG),a
+    endif
         ret
 
 set_freq:
@@ -1184,6 +1312,22 @@ set_freq:
         ld a,1
         call WRTPSG
         pop hl
+    endif
+    if SG1000
+        ld a,l
+        and $0f
+        or $80
+        out (PSG),a
+        srl h
+        rr l
+        srl h
+        rr l
+        srl h
+        rr l
+        srl h
+        rr l
+        ld a,l
+        out (PSG),a
     endif
         ret
 
@@ -1408,7 +1552,7 @@ title1:
 title2:
         incbin "title2.bin"
 title3:
-        incbin "title.dat",$3800,$0020
+        incbin "title.dat",$3800,$0010
 
 donna0:
         incbin "donna0.bin"
@@ -1441,13 +1585,115 @@ controller_dat:
 
         include "crc32.asm"
 
+        ; My personal font for TMS9928.
+        ;
+        ; Patterned after the TMS9928 programming manual 6x8 letters
+        ; with better lowercase letters, also I made a proper
+        ; AT sign.
+        ;
+font_bitmaps:
+        db $00,$00,$00,$00,$00,$00,$00,$00      ; $20 space
+        db $20,$20,$20,$20,$20,$00,$20,$00      ; $21 !
+        db $50,$50,$50,$00,$00,$00,$00,$00      ; $22 "
+        db $50,$50,$f8,$50,$f8,$50,$50,$00      ; $23 #
+        db $20,$78,$a0,$70,$28,$f0,$20,$00      ; $24 $
+        db $c0,$c8,$10,$20,$40,$98,$18,$00      ; $25 %
+        db $40,$a0,$40,$a0,$a8,$90,$68,$00      ; $26 &
+        db $60,$20,$40,$00,$00,$00,$00,$00      ; $27 '
+        db $10,$20,$40,$40,$40,$20,$10,$00      ; $28 (
+        db $40,$20,$10,$10,$10,$20,$40,$00      ; $29 )
+        db $00,$a8,$70,$20,$70,$a8,$00,$00      ; $2a *
+        db $00,$20,$20,$f8,$20,$20,$00,$00      ; $2b +
+        db $00,$00,$00,$00,$00,$60,$20,$40      ; $2c ,
+        db $00,$00,$00,$fc,$00,$00,$00,$00      ; $2d -
+        db $00,$00,$00,$00,$00,$00,$60,$00      ; $2e .
+        db $00,$08,$10,$20,$40,$80,$00,$00      ; $2f /
+        db $70,$88,$98,$a8,$c8,$88,$70,$00      ; $30 0
+        db $20,$60,$20,$20,$20,$20,$f8,$00      ; $31 1
+        db $70,$88,$08,$10,$60,$80,$f8,$00      ; $32 2
+        db $70,$88,$08,$30,$08,$88,$70,$00      ; $33 3
+        db $30,$50,$90,$90,$f8,$10,$10,$00      ; $34 4
+        db $f8,$80,$f0,$08,$08,$08,$f0,$00      ; $35 5
+        db $30,$40,$80,$f0,$88,$88,$70,$00      ; $36 6
+        db $f8,$08,$10,$20,$20,$20,$20,$00      ; $37 7
+        db $70,$88,$88,$70,$88,$88,$70,$00      ; $38 8
+        db $70,$88,$88,$78,$08,$10,$60,$00      ; $39 9
+        db $00,$00,$00,$60,$00,$60,$00,$00      ; $3a :
+        db $00,$00,$00,$60,$00,$60,$20,$40      ; $3b ;
+        db $10,$20,$40,$80,$40,$20,$10,$00      ; $3c <
+        db $00,$00,$f8,$00,$f8,$00,$00,$00      ; $3d =
+        db $08,$04,$02,$01,$02,$04,$08,$00      ; $3e >
+        db $70,$88,$08,$10,$20,$00,$20,$00      ; $3f ?
+        db $70,$88,$98,$a8,$98,$80,$70,$00      ; $40 @
+        db $20,$50,$88,$88,$f8,$88,$88,$00      ; $41 A
+        db $f0,$88,$88,$f0,$88,$88,$f0,$00      ; $42 B
+        db $70,$88,$80,$80,$80,$88,$70,$00      ; $43 C
+        db $f0,$88,$88,$88,$88,$88,$f0,$00      ; $44 D
+        db $f8,$80,$80,$f0,$80,$80,$f8,$00      ; $45 E
+        db $f8,$80,$80,$f0,$80,$80,$80,$00      ; $46 F
+        db $70,$88,$80,$b8,$88,$88,$70,$00      ; $47 G
+        db $88,$88,$88,$f8,$88,$88,$88,$00      ; $48 H
+        db $70,$20,$20,$20,$20,$20,$70,$00      ; $49 I
+        db $08,$08,$08,$08,$88,$88,$70,$00      ; $4A J
+        db $88,$90,$a0,$c0,$a0,$90,$88,$00      ; $4B K
+        db $80,$80,$80,$80,$80,$80,$f8,$00      ; $4C L
+        db $88,$d8,$a8,$a8,$88,$88,$88,$00      ; $4D M
+        db $88,$c8,$c8,$a8,$98,$98,$88,$00      ; $4E N
+        db $70,$88,$88,$88,$88,$88,$70,$00      ; $4F O
+        db $f0,$88,$88,$f0,$80,$80,$80,$00      ; $50 P
+        db $70,$88,$88,$88,$88,$a8,$90,$68      ; $51 Q
+        db $f0,$88,$88,$f0,$a0,$90,$88,$00      ; $52 R
+        db $70,$88,$80,$70,$08,$88,$70,$00      ; $53 S
+        db $f8,$20,$20,$20,$20,$20,$20,$00      ; $54 T
+        db $88,$88,$88,$88,$88,$88,$70,$00      ; $55 U
+        db $88,$88,$88,$88,$50,$50,$20,$00      ; $56 V
+        db $88,$88,$88,$a8,$a8,$d8,$88,$00      ; $57 W
+        db $88,$88,$50,$20,$50,$88,$88,$00      ; $58 X
+        db $88,$88,$88,$70,$20,$20,$20,$00      ; $59 Y
+        db $f8,$08,$10,$20,$40,$80,$f8,$00      ; $5A Z
+        db $78,$60,$60,$60,$60,$60,$78,$00      ; $5B [
+        db $00,$80,$40,$20,$10,$08,$00,$00      ; $5C \
+        db $F0,$30,$30,$30,$30,$30,$F0,$00      ; $5D ]
+        db $20,$50,$88,$00,$00,$00,$00,$00      ; $5E 
+        db $00,$00,$00,$00,$00,$00,$f8,$00      ; $5F _
+        db $40,$20,$10,$00,$00,$00,$00,$00      ; $60 
+        db $00,$00,$68,$98,$88,$98,$68,$00      ; $61 a
+        db $80,$80,$f0,$88,$88,$88,$f0,$00      ; $62 b
+        db $00,$00,$78,$80,$80,$80,$78,$00      ; $63 c
+        db $08,$08,$68,$98,$88,$98,$68,$00      ; $64 d
+        db $00,$00,$70,$88,$f8,$80,$70,$00      ; $65 e
+        db $30,$48,$40,$e0,$40,$40,$40,$00      ; $66 f
+        db $00,$00,$78,$88,$88,$78,$08,$70      ; $67 g
+        db $80,$80,$f0,$88,$88,$88,$88,$00      ; $68 h
+        db $20,$00,$60,$20,$20,$20,$70,$00      ; $69 i
+        db $08,$00,$18,$08,$88,$88,$70,$00      ; $6a j
+        db $80,$80,$88,$90,$e0,$90,$88,$00      ; $6b k
+        db $60,$20,$20,$20,$20,$20,$70,$00      ; $6c l
+        db $00,$00,$d0,$a8,$a8,$a8,$a8,$00      ; $6d m
+        db $00,$00,$b0,$c8,$88,$88,$88,$00      ; $6e n
+        db $00,$00,$70,$88,$88,$88,$70,$00      ; $6f o
+        db $00,$00,$f0,$88,$88,$88,$f0,$80      ; $70 p
+        db $00,$00,$78,$88,$88,$88,$78,$08      ; $71 q
+        db $00,$00,$b8,$c0,$80,$80,$80,$00      ; $72 r
+        db $00,$00,$78,$80,$70,$08,$f0,$00      ; $73 s
+        db $20,$20,$f8,$20,$20,$20,$20,$00      ; $74 t
+        db $00,$00,$88,$88,$88,$98,$68,$00      ; $75 u
+        db $00,$00,$88,$88,$88,$50,$20,$00      ; $76 v
+        db $00,$00,$88,$a8,$a8,$a8,$50,$00      ; $77 w
+        db $00,$00,$88,$50,$20,$50,$88,$00      ; $78 x
+        db $00,$00,$88,$88,$98,$68,$08,$70      ; $79 y
+        db $00,$00,$f8,$10,$20,$40,$f8,$00      ; $7a z
+        db $18,$20,$20,$40,$20,$20,$18,$00      ; $7b {
+        db $20,$20,$20,$20,$20,$20,$20,$00      ; $7c |
+        db $c0,$20,$20,$10,$20,$20,$c0,$00      ; $7d } 
+        db $00,$00,$40,$a8,$10,$00,$00,$00      ; $7e
+        db $70,$70,$20,$f8,$20,$70,$50,$00      ; $7f
+
 rom_end:
 
-        ds COLECO*$10000+MSX*$c000-$,$ff
+        ds COLECO*$10000+MSX*$c000+SG1000*$8000-$,$ff
 
         org ram_base
-sprites:
-        rb 128
 frame:  rb 2            ; Frame counter.
 mode:   rb 1            ; Current mode.
                         ; bit 0 = 1 = NMI processing disabled.
@@ -1456,7 +1702,10 @@ frames_per_sec: rb 1    ; Frames per second.
 bios_rom:       rb 1    ; BIOS MSX.
 cartridge_rom:  rb 1    ; MSX.
 debounce:       rb 1
-letters_bitmaps:        rb 2
+
+    if SG1000
+sg1000_pause:   rb 1
+    endif
 
 buffer:         rb 72
                           

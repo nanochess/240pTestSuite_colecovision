@@ -10,6 +10,7 @@
         ; Revision date: Dec/26/2023. Added monoscope. Optional row
         ;                             arrangement for VDP Color Bars.
         ; Revision date: Dec/27/2023. Adjusted monoscope for perfect square.
+        ; Revision date: Dec/28/2023. Added third pattern for VDP Color Bars.
         ;
 
 menu_patterns:
@@ -599,8 +600,13 @@ patterns_vdp_color_bars:
         ld a,15
         ld (debounce),a
         ld a,(alternate)
-        xor 1
+        inc a
+        cp 3
+        jr nz,$+3
+        xor a
         ld (alternate),a
+        cp 2
+        jr z,.3
         or a
         ld hl,bars2_dat
         jr z,$+5
@@ -610,6 +616,30 @@ patterns_vdp_color_bars:
         call nmi_off
         call LDIRVM
         call nmi_on
+        jr .1
+
+.3:
+        ld hl,$3800
+        ld b,24
+.4:     push bc
+        push hl
+        ld bc,$0008
+        ld a,$c0
+        call nmi_off
+        call FILVRM
+        pop hl
+        push hl
+        ld de,$0010
+        add hl,de
+        ld bc,$0008
+        ld a,$c0
+        call FILVRM
+        call nmi_on
+        pop hl
+        ld bc,32
+        add hl,bc
+        pop bc
+        djnz .4
         jr .1
 .2:
         cpl
