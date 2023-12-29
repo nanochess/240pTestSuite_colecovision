@@ -780,7 +780,7 @@ credits_text:
         dw $1420
         db $de,"http://junkerhq.net/xrgb",0
         dw $1520
-        db $ce,"Build date: Dec/28/2023",0
+        db $ce,"Build date: Dec/29/2023",0
         dw $0000
 
 reload_menu:
@@ -1545,6 +1545,10 @@ modes:
 	dw	mode5
         dw      mode6
 
+        ; 0- Bitmaps.
+        ; 1- Colors.
+        ; 2- Sprites bitmaps.
+        ; 3- Sprites attribute table.
 title0:
         incbin "title0.bin"
 title1:
@@ -1561,7 +1565,7 @@ donna1:
 donna2:
         incbin "donna2.bin"
 donna3:
-        incbin "donna.dat",$3800,$0008
+        incbin "donna.dat",$3800,$001c
 
 striped:
         incbin "striped.dat"

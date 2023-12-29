@@ -9,6 +9,8 @@
         ; Revision date: Dec/22/2023. Added Checkerboard.
         ; Revision date: Dec/25/2023. Added Drop Shadow Test and Striped
         ;                             Sprite Test. Added Lag Test.
+        ; Revision date: Dec/29/2023. Adapted tests for improved Donna
+        ;                             background.
         ;
 
 menu_video:
@@ -69,14 +71,14 @@ drop_shadow:
         ld de,$1800
         call unpack
         ld hl,striped
-        ld de,$1840
+        ld de,$1900
         ld bc,$0100
         call nmi_off
         call LDIRVM
         call nmi_on
         ld hl,donna3
         ld de,$3f90
-        ld bc,$0008
+        ld bc,$001c
         call nmi_off
         call LDIRVM
         call nmi_on
@@ -88,7 +90,7 @@ drop_shadow:
         ld (x),a
         ld a,$50
         ld (y),a
-        ld a,$08
+        ld a,$20
         ld (buffer+2),a
         add a,$04
         ld (buffer+6),a
@@ -196,10 +198,10 @@ drop_shadow:
         ld a,15
         ld (debounce),a
         ld a,(buffer+2)
-        cp $08
-        ld a,$18
+        cp $20
+        ld a,$30
         jr z,$+4
-        ld a,$08
+        ld a,$20
         ld (buffer+2),a
         add a,$04
         ld (buffer+6),a
@@ -235,14 +237,14 @@ striped_sprite:
         ld de,$1800
         call unpack
         ld hl,striped
-        ld de,$1840
+        ld de,$1900
         ld bc,$0100
         call nmi_off
         call LDIRVM
         call nmi_on
         ld hl,donna3
         ld de,$3f90
-        ld bc,$0008
+        ld bc,$001c
         call nmi_off
         call LDIRVM
         call nmi_on
@@ -251,7 +253,7 @@ striped_sprite:
         ld (x),a
         ld a,$50
         ld (y),a
-        ld a,$08
+        ld a,$20
         ld (buffer+2),a
         add a,$04
         ld (buffer+6),a

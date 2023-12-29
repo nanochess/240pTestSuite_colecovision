@@ -13,7 +13,7 @@ pletter title.dat 12288 128 title2.bin
 tmscolor -c1 -m donna.bmp donna.dat
 pletter donna.dat 0 6144 donna0.bin
 pletter donna.dat 6144 6144 donna1.bin
-pletter donna.dat 12288 64 donna2.bin
+pletter donna.dat 12288 224 donna2.bin
 tmscolor -s striped.bmp striped.dat
 tmscolor -c1 circle.bmp circle.dat
 tmscolor -c1 digits.bmp digits.dat
