@@ -2,7 +2,7 @@
         ; 240p test suite (test patterns)
         ;
         ; Original program Copyright (C) 2011 Artemio Urbina. @artemio
-        ; Colecovision version Copyright (C) 2023-2024 Oscar Toledo G. @nanochess
+        ; Colecovision/MSX/SG1000 version Copyright (C) 2023-2024 Oscar Toledo G. @nanochess
 	;
 	; This program is free software; you can redistribute it and/or modify
 	; it under the terms of the GNU General Public License as published by
