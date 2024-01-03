@@ -836,7 +836,7 @@ credits_text:
         dw $1420
         db $de,"http://junkerhq.net/xrgb",0
         dw $1520
-        db $ce,"Build date: Dec/29/2023",0
+        db $ce,"Build date: Jan/03/2024",0
         dw $0000
 
 reload_menu:
