@@ -1641,9 +1641,13 @@ monoscope1:
     if COLECO
 controller_dat:
         incbin "controller.dat"
-    endif
 
         include "crc32.asm"
+    endif
+
+    if MSX
+        include "sha1.asm"
+    endif
 
 nanochess_dat:
         incbin "nanochess.dat",$0400,$37*8
@@ -1800,6 +1804,18 @@ variation:      rb 1    ; timing_reflex_test
 pos:            rb 1    ; timing_reflex_test
 total:          rb 2    ; timing_reflex_test
 beep:           rb 1    ; timing_reflex_test
+
+    if MSX
+sha1_h0:        rb 4
+sha1_h1:        rb 4
+sha1_h2:        rb 4
+sha1_h3:        rb 4
+sha1_h4:        rb 4
+sha1_len:       rb 2
+sha1_pos:       rb 1
+sha1_hcopy:     rb 20
+sha1_buffer:    rb 320
+    endif
 
 bitmap_letters: equ ram_base+$0200
 

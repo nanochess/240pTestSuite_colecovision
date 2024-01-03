@@ -27,6 +27,8 @@ menu_hardware:
     if COLECO
         dw $0820
         db "*Controller Test",0
+    endif
+    if COLECO+MSX
         dw $0920
         db "*BIOS data",0
     endif
@@ -45,6 +47,8 @@ hardware_menu:
     if COLECO
         jp z,controller_test
         dec a
+    endif
+    if COLECO+MSX
         jp z,bios_test
         dec a
     endif
@@ -332,6 +336,12 @@ controller_test:
         db $0c,$06
     endif
 
+sha1_test:
+        db "The quick brown fox jumps over the lazy dog"
+        ; https://www.di-mgt.com.au/sha_testvectors.html
+sha1_test2:
+	db "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu"
+
 bios_test:
         call clean_menu
 
@@ -346,26 +356,6 @@ bios_test:
         ld bc,$2000
         call crc32_calculate
         call crc32_final
-    endif
-        ; Not enabled, as databases are based on a SHA1 hash.
-    if MSX
-        ld a,$c9
-	ld ($fd9a),a
-        ld a,(bios_rom)
-        ld h,$40
-        call ENASLT     ; Map into $4000-$7FFF
-        call crc32_init
-        ld hl,$0000
-        ld bc,$8000
-        call crc32_calculate
-        call crc32_final
-        ld a,(cartridge_rom)
-        ld h,$40
-        call ENASLT     ; Map into $4000-$7FFF
-        ld a,$c3
-	ld ($fd9a),a
-    endif
-
         ld ix,buffer
         ld a,d
         call generate_hex
@@ -385,6 +375,96 @@ bios_test:
         call show_message
         pop hl
         pop de
+
+    endif
+        ; Not enabled, as databases are based on a SHA1 hash.
+    if MSX
+        ld a,$c9
+	ld ($fd9a),a
+        ld a,(bios_rom)
+        ld h,$40
+        call ENASLT     ; Map into $4000-$7FFF
+        call sha1_init
+        ld hl,$0000
+        ld bc,$8000
+
+;        ld hl,$4000    ; @@@ self-SHA1 of cartridge.
+;        ld bc,$8000    ; @@@
+
+;        ld hl,sha1_test ; @@@
+;        ld bc,43        ; @@@
+
+;        ld hl,sha1_test2 ; @@@
+;        ld bc,896/8       ; @@@
+
+        call sha1_calculate
+        call sha1_final
+        ld a,(cartridge_rom)
+        ld h,$40
+        call ENASLT     ; Map into $4000-$7FFF
+        ld a,$c3
+	ld ($fd9a),a
+        ld iy,sha1_h0
+        ld ix,buffer
+        ld a,(iy+0)
+        call generate_hex
+        ld a,(iy+1)
+        call generate_hex
+        ld a,(iy+2)
+        call generate_hex
+        ld a,(iy+3)
+        call generate_hex
+        ld a,(iy+4)
+        call generate_hex
+        ld (ix+0),' '
+        inc ix
+        ld a,(iy+5)
+        call generate_hex
+        ld a,(iy+6)
+        call generate_hex
+        ld a,(iy+7)
+        call generate_hex
+        ld a,(iy+8)
+        call generate_hex
+        ld a,(iy+9)
+        call generate_hex
+        ld (ix+0),0
+
+        ld ix,buffer+22
+        ld a,(iy+10)
+        call generate_hex
+        ld a,(iy+11)
+        call generate_hex
+        ld a,(iy+12)
+        call generate_hex
+        ld a,(iy+13)
+        call generate_hex
+        ld a,(iy+14)
+        call generate_hex
+        ld (ix+0),' '
+        inc ix
+        ld a,(iy+15)
+        call generate_hex
+        ld a,(iy+16)
+        call generate_hex
+        ld a,(iy+17)
+        call generate_hex
+        ld a,(iy+18)
+        call generate_hex
+        ld a,(iy+19)
+        call generate_hex
+        ld (ix+0),0
+
+        ld hl,buffer
+        ld de,$0920
+        ld a,$1e
+        call show_message
+        ld hl,buffer+22
+        ld de,$0a20
+        ld a,$1e
+        call show_message
+
+    endif
 
     if COLECO
         ld ix,goodcol_data
@@ -556,7 +636,12 @@ goodcol_data:
         db "Unrecognized BIOS",0
 
 hardware_msg_1:
+    if COLECO
         db "BIOS CRC32:",0
+    endif
+    if MSX
+        db "BIOS SHA1:",0
+    endif
 hardware_msg_5:
         db "   1           2",0
 hardware_msg_6:
