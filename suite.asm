@@ -1,8 +1,22 @@
         ;
         ; 240p test suite
         ;
-        ; Original program by Artemio Urbina. @artemio
-        ; Colecovision/MSX version by Oscar Toledo G. @nanochess
+        ; Original program Copyright (C) 2011 Artemio Urbina. @artemio
+        ; Colecovision version Copyright (C) 2023-2024 Oscar Toledo G. @nanochess
+	;
+	; This program is free software; you can redistribute it and/or modify
+	; it under the terms of the GNU General Public License as published by
+	; the Free Software Foundation; either version 2 of the License, or
+	; (at your option) any later version.
+	;
+	; This program is distributed in the hope that it will be useful,
+	; but WITHOUT ANY WARRANTY; without even the implied warranty of
+	; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	; GNU General Public License for more details.
+	;
+	; You should have received a copy of the GNU General Public License along
+	; with this program; if not, write to the Free Software Foundation, Inc.,
+	; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
         ;
         ; Creation date: Dec/20/2023.
         ; Revision date: Dec/22/2023. Moved patterns test to its own file.
@@ -11,6 +25,7 @@
         ; Revision date: Dec/28/2023. It can exit menus with #. Now it works
         ;                             in SG1000, also added my font bitmaps
         ;                             because SG1000 doesn't have any.
+        ; Revision date: Jan/03/2023. Added my logo at the start.
         ;
             
 COLECO: equ 1   ; Define this to 1 for Colecovision
@@ -165,7 +180,7 @@ rotate_slot:
 
     endif
 
-        db "Powered by @nanochess :) Dec/2023",0
+        db "Powered by @nanochess :) Coding started Dec/20/2023",0
 
 SETWRT:
 	ld a,l
@@ -664,6 +679,47 @@ START:
     endif
 
 ;       call init_sound
+
+logo_screen:
+        call vdp_mode_2
+
+        ld hl,nanochess_dat
+        ld de,$0400
+        ld bc,$37*8
+        call nmi_off
+        call LDIRVM3
+        call nmi_on
+
+        ld hl,nanochess_dat+$37*8
+        ld de,$2400
+        ld bc,$37*8
+        call nmi_off
+        call LDIRVM3
+        call nmi_on
+
+        ld hl,nanochess_dat+$37*8*2
+        ld de,$38ea
+        ld b,7
+.1:     push bc
+        push hl
+        push de
+        ld bc,$000d
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+        pop hl
+        ld bc,$0020
+        add hl,bc
+        ex de,hl
+        pop hl
+        ld bc,$000d
+        add hl,bc
+        pop bc
+        djnz .1
+
+        ld b,180
+        halt
+        djnz $-1
 
 title_screen:
         call vdp_mode_2
@@ -1588,6 +1644,11 @@ controller_dat:
     endif
 
         include "crc32.asm"
+
+nanochess_dat:
+        incbin "nanochess.dat",$0400,$37*8
+        incbin "nanochess.dat",$0c00,$37*8
+        incbin "nanochess.dat",$1000,$000d*$0007
 
         ; My personal font for TMS9928.
         ;
