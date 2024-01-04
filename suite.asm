@@ -26,6 +26,7 @@
         ;                             in SG1000, also added my font bitmaps
         ;                             because SG1000 doesn't have any.
         ; Revision date: Jan/03/2023. Added my logo at the start.
+        ; Revision date: Jan/04/2023. Added Audio Sync Test.
         ;
             
 COLECO: equ 1   ; Define this to 1 for Colecovision
@@ -752,6 +753,8 @@ audio_menu:
 
         or a
         jp z,audio_test
+        dec a
+        jp z,audio_sync_test
 
         jp main_menu
 
@@ -777,6 +780,202 @@ audio_test:
         ld a,15
         ld (debounce),a
         jp audio_menu
+
+        ;
+        ; Audio Sync Test.
+        ;
+audio_sync_test:
+        call DISSCR
+        call clear_sprites
+        call highres
+        ld hl,.void
+        ld de,$0000
+        ld bc,$0088
+        call nmi_off
+        call LDIRVM3
+        call nmi_on
+        ld hl,.void_color
+        ld de,$2000
+        ld bc,$0088
+        call nmi_off
+        call LDIRVM3
+        call nmi_on
+        ld hl,$3800
+        ld bc,$0300
+        xor a
+        call nmi_off
+        call FILVRM
+        call nmi_on
+        ld hl,.block
+        ld de,$1800
+        ld bc,$0020
+        call nmi_off
+        call LDIRVM
+        call nmi_on
+
+        ld hl,$3a80
+        ld bc,$0020
+        ld a,$01
+        call nmi_off
+        call FILVRM
+        call nmi_on
+        call ENASCR
+
+        xor a
+        ld (pause),a
+
+        ld a,$78
+        ld (x),a
+        ld a,$58
+        ld (y),a
+        ld a,1
+        ld (direction),a
+.1:
+        ld a,(y)
+        dec a
+        ld (buffer),a
+        ld a,(x)
+        ld (buffer+1),a
+        xor a
+        ld (buffer+2),a
+        ld a,$0f
+        ld (buffer+3),a
+
+        halt
+        call play_beep
+        ld a,(y)
+        cp $94
+        ld bc,$0f07
+        jr z,$+5
+        ld bc,$0107
+        call WRTVDP
+        ld hl,buffer
+        ld de,$3f80
+        ld bc,$0004
+        call LDIRVM
+        call .build_bars
+        ld hl,buffer
+        ld de,$3900
+        ld bc,32
+        call LDIRVM
+        ld hl,buffer
+        ld de,$3920
+        ld bc,32
+        call LDIRVM
+
+        ld a,(pause)
+        or a
+        jr nz,.3
+        ld a,(direction)
+        ld b,a
+        ld a,(y)
+        add a,b
+        ld (y),a
+        cp $58
+        jr z,.4
+        cp $94
+        jr nz,.5
+        ld a,1
+        ld (beep),a
+.4:     ld a,(direction)
+        neg
+        ld (direction),a
+.5:
+
+.3:
+
+        call read_joystick_button_debounce
+        bit 6,a
+        jr nz,.2
+        ld a,15
+        ld (debounce),a
+        ld a,(pause)
+        xor 1
+        ld (pause),a
+        jp .1
+.2:
+        cpl
+        and $20
+        jp z,.1
+        ld a,15
+        ld (debounce),a
+
+        call reload_menu
+        jp audio_menu
+
+.build_bars:
+        ld hl,buffer
+        ld b,32
+        xor a
+        ld (hl),a
+        inc hl
+        djnz $-2
+        ld hl,buffer
+        ld de,buffer+31
+        ld a,(y)
+        sub $18
+        push af
+        srl a
+        srl a
+        srl a
+        ld b,a
+        ld a,$01
+.b1:    ld (hl),a
+        inc hl
+        ld (de),a
+        dec de
+        djnz .b1
+        pop af
+        and 7
+        xor 7
+        inc a
+        ld (hl),a
+        add a,8
+        ld (de),a
+        ret
+
+.void:
+        db $00,$00,$00,$00,$00,$00,$00,$00
+        db $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff
+        db $fe,$fe,$fe,$fe,$fe,$fe,$fe,$fe
+        db $fc,$fc,$fc,$fc,$fc,$fc,$fc,$fc
+        db $f8,$f8,$f8,$f8,$f8,$f8,$f8,$f8
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $e0,$e0,$e0,$e0,$e0,$e0,$e0,$e0
+        db $c0,$c0,$c0,$c0,$c0,$c0,$c0,$c0
+        db $80,$80,$80,$80,$80,$80,$80,$80
+        db $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff
+        db $7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f
+        db $3f,$3f,$3f,$3f,$3f,$3f,$3f,$3f
+        db $1f,$1f,$1f,$1f,$1f,$1f,$1f,$1f
+        db $0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f
+        db $07,$07,$07,$07,$07,$07,$07,$07
+        db $03,$03,$03,$03,$03,$03,$03,$03
+        db $01,$01,$01,$01,$01,$01,$01,$01
+.void_color:
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+.block:
+        db $00,$00,$00,$00,$0f,$0f,$0f,$0f
+        db $0f,$0f,$0f,$0f,$00,$00,$00,$00
+        db $00,$00,$00,$00,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$00,$00,$00,$00
+
 
         include "patterns.asm"
 
@@ -1106,7 +1305,9 @@ menu_main:
 menu_audio:
         dw $0820
         db "*Sound Test",0
-        dw $0a20
+        dw $0920
+        db "*Audio Sync Test",0
+        dw $0b20
         db "*Back to Main Menu",0
         dw $0000
 

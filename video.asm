@@ -25,6 +25,8 @@
         ;                             Sprite Test. Added Lag Test.
         ; Revision date: Dec/29/2023. Adapted tests for improved Donna
         ;                             background.
+        ; Revision date: Jan/04/2024. Moved Checkerboard test below, and
+        ;                             added Backlit Zone Test.
         ;
 
 menu_video:
@@ -33,18 +35,20 @@ menu_video:
         dw $0920
         db "*Striped Sprite Test",0
         dw $0a20
-        db "*Checkerboard",0
-        dw $0b20
         db "*Lag Test",0        
-        dw $0c20
+        dw $0b20
         db "*Timing & Reflex Test",0
-        dw $0d20
+        dw $0c20
         db "*Grid Scroll Test",0
-        dw $0e20
+        dw $0d20
         db "*Horizontal Stripes",0
-        dw $1020
+        dw $0e20
+        db "*Checkerboard",0
+        dw $0f20
+        db "*Backlit Zone Test",0
+        dw $1120
         db "*Back to Main Menu",0
-        dw $0000
+        dw $0000                      
 
 video_menu:
         call clean_menu
@@ -56,8 +60,6 @@ video_menu:
         dec a
         jp z,striped_sprite
         dec a
-        jp z,checkerboard
-        dec a
         jp z,lag_test
         dec a
         jp z,timing_reflex_test
@@ -65,6 +67,10 @@ video_menu:
         jp z,grid_scroll
         dec a
         jp z,draw_stripes
+        dec a
+        jp z,checkerboard
+        dec a
+        jp z,backlit_zone_test        
         
         jp main_menu
 
@@ -2275,4 +2281,229 @@ draw_stripes:
 .stripesneg:
         db $ff,$00,$ff,$00,$ff,$00,$ff,$00
 
+        ;
+        ; Backlit Zone Test
+        ;
+backlit_zone_test:
+        call DISSCR
+        call clear_sprites
+        call highres
+        ld hl,.void
+        ld de,$0000
+        ld bc,$0008
+        call nmi_off
+        call LDIRVM3
+        call nmi_on
+        ld hl,.void_color
+        ld de,$2000
+        ld bc,$0008
+        call nmi_off
+        call LDIRVM3
+        call nmi_on
+        ld hl,$3800
+        ld bc,$0300
+        xor a
+        call nmi_off
+        call FILVRM
+        call nmi_on
+
+        call ENASCR
+        xor a
+        ld (alternate),a
+        ld a,1
+        ld (invert),a
+        call .define
+        ld a,$70
+        ld (x),a
+        xor a
+        ld (x2),a
+        ld a,$50
+        ld (y),a
+        xor a
+        ld (y2),a
+
+.1:
+        ld a,(invert)
+        or a
+        ld a,$d1
+        jr z,.9
+        ld a,(y)
+        ld l,a
+        ld a,(y2)
+        ld h,a
+        dec hl
+        ld a,l
+.9:
+        ld (buffer),a
+        ld a,(x)
+        ld l,a
+        ld a,(x2)
+        ld h,a
+        ld c,$0f
+        bit 7,h
+        jr z,.2
+        ld de,$0020
+        add hl,de
+        ld c,$8f
+.2:     ld a,l
+        ld (buffer+1),a
+        xor a
+        ld (buffer+2),a
+        ld a,c
+        ld (buffer+3),a
+
+        halt
+        ld hl,buffer
+        ld de,$3f80
+        ld bc,$0004
+        call LDIRVM
+
+        call read_joystick_button_debounce
+        bit 0,a
+        jr nz,.4
+        push af
+        ld a,(y)
+        ld l,a
+        ld a,(y2)
+        ld h,a
+        dec hl
+        ld de,$fff8
+        or a
+        sbc hl,de
+        add hl,de
+        jr nz,$+5
+        ld hl,$00b7
+        ld a,l
+        ld (y),a
+        ld a,h
+        ld (y2),a
+        pop af
+.4:
+        bit 1,a
+        jr nz,.5
+        push af
+        ld a,(x)
+        ld l,a
+        ld a,(x2)
+        ld h,a
+        inc hl
+        ld de,$00f8
+        or a
+        sbc hl,de
+        add hl,de
+        jr nz,$+5
+        ld hl,$fff9
+        ld a,l
+        ld (x),a
+        ld a,h
+        ld (x2),a
+        pop af
+.5:
+        bit 2,a
+        jr nz,.6
+        push af
+        ld a,(y)
+        ld l,a
+        ld a,(y2)
+        ld h,a
+        inc hl
+        ld de,$00b8
+        or a
+        sbc hl,de
+        add hl,de
+        jr nz,$+5
+        ld hl,$fff9
+        ld a,l
+        ld (y),a
+        ld a,h
+        ld (y2),a
+        pop af
+.6:
+        bit 3,a
+        jr nz,.7
+        push af
+        ld a,(x)
+        ld l,a
+        ld a,(x2)
+        ld h,a
+        dec hl
+        ld de,$fff8
+        or a
+        sbc hl,de
+        add hl,de
+        jr nz,$+5
+        ld hl,$00f7
+        ld a,l
+        ld (x),a
+        ld a,h
+        ld (x2),a
+        pop af
+.7:     bit 6,a
+        jr nz,.8
+        ld a,15
+        ld (debounce),a
+        ld a,(alternate)
+        inc a
+        and 3
+        ld (alternate),a
+        call .define
+        jp .1
+.8:
+        bit 7,a
+        jr nz,.10
+        ld a,15
+        ld (debounce),a
+        ld a,(invert)
+        xor 1
+        ld (invert),a
+        jp .1
+.10:
+        cpl
+        and $20
+        jp z,.1
+        ld a,15
+        ld (debounce),a
+
+        call reload_menu
+        jp video_menu
+
+.define:
+        ld hl,.block
+        ld a,(alternate)
+        rrca
+        rrca
+        rrca
+        ld e,a
+        ld d,0
+        add hl,de
+        ld de,$1800
+        ld bc,$0020
+        call nmi_off
+        call LDIRVM
+        jp nmi_on
+
+.void:
+        db $00,$00,$00,$00,$00,$00,$00,$00
+.void_color:
+        db $f0,$f0,$f0,$f0,$f0,$f0,$f0,$f0
+.block:
+        db $00,$00,$00,$00,$00,$00,$00,$01
+        db $01,$00,$00,$00,$00,$00,$00,$00
+        db $00,$00,$00,$00,$00,$00,$00,$80
+        db $80,$00,$00,$00,$00,$00,$00,$00
+
+        db $00,$00,$00,$00,$00,$00,$03,$03
+        db $03,$03,$00,$00,$00,$00,$00,$00
+        db $00,$00,$00,$00,$00,$00,$c0,$c0
+        db $c0,$c0,$00,$00,$00,$00,$00,$00
+
+        db $00,$00,$00,$00,$00,$07,$07,$07
+        db $07,$07,$07,$00,$00,$00,$00,$00
+        db $00,$00,$00,$00,$00,$e0,$e0,$e0
+        db $e0,$e0,$e0,$00,$00,$00,$00,$00
+
+        db $00,$00,$00,$00,$0f,$0f,$0f,$0f
+        db $0f,$0f,$0f,$0f,$00,$00,$00,$00
+        db $00,$00,$00,$00,$f0,$f0,$f0,$f0
+        db $f0,$f0,$f0,$f0,$00,$00,$00,$00
 

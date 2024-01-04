@@ -2,7 +2,7 @@
 
 ### Original program by Artemio Urbina. Colecovision/MSX/SG1000 version by Oscar Toledo G.
 
-### Last revision: Dec/28/2023.
+### Last revision: Jan/03/2024.
 
 Choose items from the menu by moving the stick up and down using any controller.
 
@@ -108,16 +108,6 @@ Move shadow using the stick of any controller.
 
 Press any side button or key # to exit test.
 
-### Video tests > Checkerboard.
-
-Press left button to alternate pixels on each frame.
-
-Press right button to switch pixels on each press.
-
-Press key * to show frame count.
-
-Press key # to exit test.
-
 ### Video tests > Lag Test.
 
 This test is designed to be used with two displays connected at the same time. One being a CRT, or a display with a known lag as reference, and the other the display to test.
@@ -166,6 +156,20 @@ The user can also change the frames with the right-side button, which alternates
 
 Press key # to exit test.
 
+### Video tests > Checkerboard.
+
+Press left button to alternate pixels on each frame.
+
+Press right button to switch pixels on each press.
+
+Press key * to show frame count.
+
+Press key # to exit test.
+
+### Video tests > Backlit Zone Test.
+
+This test is designed to evaluate how a display deals with dark scenes. A single sprite of variable size can be controlled by the user on top of a completely black background. The dimming zones can be easily spotted while doing this and the rest of the screen should - in theory - remain off. The sprite can be hidden with the right-side button, and the sprite size can be changed with the left-side button. 
+
 ### Audio test > Sound test
 
 It emits an approximate audio frequency of 1000 hz.
@@ -182,9 +186,11 @@ Press both side buttons on any controller to exit test.
 
 ### Hardware > BIOS data.
 
-Shows BIOS checksum.
+Shows BIOS checksum (CRC32 for Colecovision, SHA1 for MSX BIOS on first 32K)
 
-Currently not implemented on MSX (it would require SHA1 to match against the database of MSX ROMS) and in SG1000 there is no BIOS to check.
+It can take a few seconds to show the hash. In MSX emulation the test isn't useful as the emulators tend to patch the MSX BIOS.
+
+Not implemented in SG1000 as it doesn't has a BIOS.
 
 Press any side button on any controller to exit test.
 
