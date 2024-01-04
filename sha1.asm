@@ -80,25 +80,17 @@ sha1_calculate:
         push hl         ; Save new pointer to source data.
         cp 64           ; Is the buffer filled?
         call z,sha1_chunk       ; Yes, process the chunk.
-        pop hl          ; HL = New pointer to source data.
-        pop de          ; DE = How many bytes copied.
-        pop bc          ; BC = How many bytes to copy.
+        pop de          ; DE = New pointer to source data.
+        pop bc          ; BC = How many bytes copied.
+        pop hl          ; HL = How many bytes to copy.
 
-	ex de,hl
-        ld a,h          ; Negate bytes written.
-	cpl
-	ld h,a
-	ld a,l
-	cpl
-	ld l,a
-	inc hl
-        add hl,bc       ; To subtract from master counter.
+        or a
+        sbc hl,bc       ; Subtract copied bytes from master counter.
 	ld b,h
 	ld c,l
 	ex de,hl
 
-        ld a,b          ; All bytes processed?
-	or c
+                        ; All bytes processed?
         jr nz,.1        ; No, jump.
 	ret
 
@@ -107,30 +99,30 @@ sha1_chunk:
 	; Extend the sixteen 32-bit words into eighty 32-bit words.
 	ld ix,sha1_buffer+64
 	ld b,64
-.1:	ld a,(ix-12)
-	xor (ix-32)
-	xor (ix-56)
-	xor (ix-64)
-	ld d,a
-	ld a,(ix-11)
-	xor (ix-31)
-	xor (ix-55)
-	xor (ix-63)
-	ld e,a
-	ld a,(ix-10)
-	xor (ix-30)
-	xor (ix-54)
-	xor (ix-62)
-	ld h,a
+.1:
 	ld a,(ix-9)
 	xor (ix-29)
 	xor (ix-53)
 	xor (ix-61)
 	ld l,a
-	ld a,d		; Rotate left by one bit.
+	ld a,(ix-10)
+	xor (ix-30)
+	xor (ix-54)
+	xor (ix-62)
+	ld h,a
+	ld a,(ix-11)
+	xor (ix-31)
+	xor (ix-55)
+	xor (ix-63)
+	ld e,a
+        ld a,(ix-12)
+	xor (ix-32)
+	xor (ix-56)
+	xor (ix-64)
+	ld d,a
+                        ; Rotate left by one bit.
 	rla
-	rl l
-	rl h
+        adc hl,hl
 	rl e
 	rl d
 	ld (ix+0),d
@@ -147,228 +139,142 @@ sha1_chunk:
 	ldir
 
 	ld ix,sha1_buffer
-        xor a
-.2:     push af
-	cp 20
+        ;
+        ; SHA1 rounds.
+        ;
+        ; We don't need to process 32-bit at a time,
+        ; instead we can work with 16-bits and combine
+        ; both at the end. This shortens the code.
+        ;
+        ld a,256-80
+.2:     cp 256-60
 	jp nc,.3
-	ld hl,(sha1_h1)
-	ld de,(sha1_h1+2)
-	ld bc,(sha1_h2)
-	ld a,l
-	and c
-	ld l,a
-	ld a,h
-	and b
-	ld h,a
-	ld bc,(sha1_h2+2)
-	ld a,e
-	and c
-	ld e,a
-	ld a,d
-	and b
-	ld d,a
-	push de
-	push hl
-	ld hl,(sha1_h1)
-	ld de,(sha1_h1+2)
-	ld bc,(sha1_h3)
-	ld a,l
-        cpl
-	and c
-	ld l,a
-	ld a,h
-        cpl
-	and b
-	ld h,a
-	ld bc,(sha1_h3+2)
-	ld a,e
-        cpl
-	and c
-	ld e,a
-	ld a,d
-        cpl
-	and b
-	ld d,a
-	pop bc
-	ld a,l
-	or c
-	ld l,a
-	ld a,h
-	or b
-	ld h,a
-	pop bc
-	ld a,e
-	or c
-	ld e,a
-	ld a,d
-	or b
-	ld d,a
-	exx
+        ex af,af'
 	ld hl,$7999
 	ld de,$5a82
-	exx
+        push de
+        push hl
+	ld hl,(sha1_h1)
+        ld de,(sha1_h2)
+        ld bc,(sha1_h3)
+        ld a,l
+        cpl
+        and c
+        ld c,a
+	ld a,l
+        and e
+        or c
+	ld l,a
+        ld a,h
+        cpl
+        and b
+        ld b,a
+	ld a,h
+        and d
+        or b
+	ld h,a
+	ld de,(sha1_h1+2)
+        ld bc,(sha1_h3+2)
+        ld a,e
+        cpl
+        and c
+        ld c,a
+        ld a,(sha1_h2+2)
+        and e
+        or c
+        ld e,a
+        ld a,d
+        cpl
+        and b
+        ld b,a
+        ld a,(sha1_h2+3)
+        and d
+        or b
+        ld d,a
 	jp .6
 .3:
-	cp 40
+        cp 256-40
 	jp nc,.4
-	ld hl,(sha1_h1)
-	ld de,(sha1_h1+2)
-	ld bc,(sha1_h2)
-	ld a,l
-	xor c
-	ld l,a
-	ld a,h
-	xor b
-	ld h,a
-	ld bc,(sha1_h2+2)
-	ld a,e
-	xor c
-	ld e,a
-	ld a,d
-	xor b
-	ld d,a
-	ld bc,(sha1_h3)
-	ld a,l
-	xor c
-	ld l,a
-	ld a,h
-	xor b
-	ld h,a
-	ld bc,(sha1_h3+2)
-	ld a,e
-	xor c
-	ld e,a
-	ld a,d
-	xor b
-	ld d,a
-	exx
+        ex af,af'
 	ld hl,$eba1
 	ld de,$6ed9
-	exx
-	jp .6
+        push de
+        push hl
+        jp .7
 .4:
-	cp 60
+        cp 256-20
 	jp nc,.5
-	ld hl,(sha1_h1)
-	ld de,(sha1_h1+2)
-	ld bc,(sha1_h2)
-	ld a,l
-	and c
-	ld l,a
-	ld a,h
-	and b
-	ld h,a
-	ld bc,(sha1_h2+2)
-	ld a,e
-	and c
-	ld e,a
-	ld a,d
-	and b
-	ld d,a
-	push de
-	push hl
-	ld hl,(sha1_h1)
-	ld de,(sha1_h1+2)
-	ld bc,(sha1_h3)
-	ld a,l
-	and c
-	ld l,a
-	ld a,h
-	and b
-	ld h,a
-	ld bc,(sha1_h3+2)
-	ld a,e
-	and c
-	ld e,a
-	ld a,d
-	and b
-	ld d,a
-	pop bc
-	ld a,l
-	or c
-	ld l,a
-	ld a,h
-	or b
-	ld h,a
-	pop bc
-	ld a,e
-	or c
-	ld e,a
-	ld a,d
-	or b
-	ld d,a
-	push de
-	push hl
-	ld hl,(sha1_h2)
-	ld de,(sha1_h2+2)
-	ld bc,(sha1_h3)
-	ld a,l
-	and c
-	ld l,a
-	ld a,h
-	and b
-	ld h,a
-	ld bc,(sha1_h3+2)
-	ld a,e
-	and c
-	ld e,a
-	ld a,d
-	and b
-	ld d,a
-	pop bc
-	ld a,l
-	or c
-	ld l,a
-	ld a,h
-	or b
-	ld h,a
-	pop bc
-	ld a,e
-	or c
-	ld e,a
-	ld a,d
-	or b
-	ld d,a
-	exx
+        ex af,af'
 	ld hl,$bcdc
 	ld de,$8f1b
-	exx
+        push de
+        push hl
+	ld hl,(sha1_h1)
+        ld de,(sha1_h2)
+        ld bc,(sha1_h3)
+        ld a,e
+        or c
+        and l
+	ld l,a
+        ld a,e
+        and c
+        or l
+        ld l,a
+        ld a,d
+        or b
+        and h
+        ld h,a
+        ld a,d
+        and b
+        or h
+        ld h,a
+	ld de,(sha1_h1+2)
+	ld bc,(sha1_h2+2)
+        ld a,(sha1_h3+2)
+        or c
+        and e
+        ld e,a
+        ld a,(sha1_h3+2)
+        and c
+        or e
+        ld e,a
+        ld a,(sha1_h3+3)
+        or b
+        and d
+        ld d,a
+        ld a,(sha1_h3+3)
+        and b
+        or d
+        ld d,a
 	jp .6
 .5:
-	ld hl,(sha1_h1)
-	ld de,(sha1_h1+2)
-	ld bc,(sha1_h2)
-	ld a,l
-	xor c
-	ld l,a
-	ld a,h
-	xor b
-	ld h,a
-	ld bc,(sha1_h2+2)
-	ld a,e
-	xor c
-	ld e,a
-	ld a,d
-	xor b
-	ld d,a
-	ld bc,(sha1_h3)
-	ld a,l
-	xor c
-	ld l,a
-	ld a,h
-	xor b
-	ld h,a
-	ld bc,(sha1_h3+2)
-	ld a,e
-	xor c
-	ld e,a
-	ld a,d
-	xor b
-	ld d,a
-	exx
+        ex af,af'
 	ld hl,$c1d6
 	ld de,$ca62
-	exx
+        push de
+        push hl
+.7:
+        ld hl,(sha1_h1)
+        ld de,(sha1_h2)
+        ld bc,(sha1_h3)
+	ld a,l
+        xor e
+        xor c
+	ld l,a
+	ld a,h
+        xor d
+        xor b
+	ld h,a
+	ld de,(sha1_h1+2)
+	ld bc,(sha1_h2+2)
+        ld a,(sha1_h3+2)
+        xor e
+	xor c
+	ld e,a
+        ld a,(sha1_h3+3)
+        xor d
+        xor b
+	ld d,a
 .6:
 	ld bc,(sha1_h4)
 	add hl,bc
@@ -376,14 +282,8 @@ sha1_chunk:
 	ex de,hl
 	adc hl,bc
 	ex de,hl
-	exx
-	push hl
-	exx
 	pop bc
 	add hl,bc
-	exx
-	push de
-	exx
 	pop bc
 	ex de,hl
 	adc hl,bc
@@ -395,53 +295,38 @@ sha1_chunk:
 	ld b,(ix+0)
 	ex de,hl
 	adc hl,bc
-	ex de,hl
-	exx
+        push hl
+        push de
 	ld hl,(sha1_h0)
         ld de,(sha1_h0+2)
 	ld a,d
 	rla
-	rl l
-	rl h
+        adc hl,hl
 	rl e
 	rl d
-	ld a,d
 	rla
-	rl l
-	rl h
+        adc hl,hl
 	rl e
 	rl d
-	ld a,d
 	rla
-	rl l
-	rl h
+        adc hl,hl
 	rl e
 	rl d
-	ld a,d
 	rla
-	rl l
-	rl h
+        adc hl,hl
 	rl e
 	rl d
-	ld a,d
 	rla
-	rl l
-	rl h
+        adc hl,hl
 	rl e
 	rl d
-	push hl
-	exx
 	pop bc
 	add hl,bc
-	exx
-	push de
-	exx
 	pop bc
 	ex de,hl
 	adc hl,bc
 	ex de,hl
-	push de
-	push hl
+        exx
         ld hl,(sha1_h3)
         ld (sha1_h4),hl
         ld hl,(sha1_h3+2)
@@ -458,7 +343,6 @@ sha1_chunk:
 	rr e
 	rr h
 	rr l
-	ld a,l
 	rra
 	rr d
 	rr e
@@ -470,71 +354,59 @@ sha1_chunk:
         ld (sha1_h1),hl
         ld hl,(sha1_h0+2)
         ld (sha1_h1+2),hl
-	pop hl
-	pop de
+        exx
 	ld (sha1_h0),hl
 	ld (sha1_h0+2),de
-        pop af
+        ex af,af'
         ld de,4
         add ix,de
         inc a
-	cp 80
 	jp nz,.2
 
 	ld hl,(sha1_h0)
-	ld de,(sha1_h0+2)
 	ld bc,(sha1_hcopy)
 	add hl,bc
+        ld (sha1_h0),hl
+        ld hl,(sha1_h0+2)
 	ld bc,(sha1_hcopy+2)
-	ex de,hl
 	adc hl,bc
-	ex de,hl
-	ld (sha1_h0),hl
-	ld (sha1_h0+2),de
+        ld (sha1_h0+2),hl
 
 	ld hl,(sha1_h1)
-	ld de,(sha1_h1+2)
 	ld bc,(sha1_hcopy+4)
 	add hl,bc
-	ld bc,(sha1_hcopy+6)
-	ex de,hl
-	adc hl,bc
-	ex de,hl
 	ld (sha1_h1),hl
-	ld (sha1_h1+2),de
+        ld hl,(sha1_h1+2)
+	ld bc,(sha1_hcopy+6)
+	adc hl,bc
+        ld (sha1_h1+2),hl
 
 	ld hl,(sha1_h2)
-	ld de,(sha1_h2+2)
 	ld bc,(sha1_hcopy+8)
 	add hl,bc
-	ld bc,(sha1_hcopy+10)
-	ex de,hl
-	adc hl,bc
-	ex de,hl
 	ld (sha1_h2),hl
-	ld (sha1_h2+2),de
+        ld hl,(sha1_h2+2)
+	ld bc,(sha1_hcopy+10)
+	adc hl,bc
+        ld (sha1_h2+2),hl
 
 	ld hl,(sha1_h3)
-	ld de,(sha1_h3+2)
 	ld bc,(sha1_hcopy+12)
 	add hl,bc
-	ld bc,(sha1_hcopy+14)
-	ex de,hl
-	adc hl,bc
-	ex de,hl
 	ld (sha1_h3),hl
-	ld (sha1_h3+2),de
+        ld hl,(sha1_h3+2)
+	ld bc,(sha1_hcopy+14)
+	adc hl,bc
+        ld (sha1_h3+2),hl
 
 	ld hl,(sha1_h4)
-	ld de,(sha1_h4+2)
 	ld bc,(sha1_hcopy+16)
 	add hl,bc
-	ld bc,(sha1_hcopy+18)
-	ex de,hl
-	adc hl,bc
-	ex de,hl
 	ld (sha1_h4),hl
-	ld (sha1_h4+2),de
+        ld hl,(sha1_h4+2)
+	ld bc,(sha1_hcopy+18)
+	adc hl,bc
+        ld (sha1_h4+2),hl
 
         xor a
         ld (sha1_pos),a
