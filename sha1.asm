@@ -147,13 +147,28 @@ sha1_chunk:
         ; both at the end. This shortens the code.
         ;
         ld a,256-80
-.2:     cp 256-60
+.2:
+        ld hl,(sha1_h4)
+        ld c,(ix+3)
+        ld b,(ix+2)
+        add hl,bc
+        ex de,hl
+        ld hl,(sha1_h4+2)
+        ld c,(ix+1)
+        ld b,(ix+0)
+        adc hl,bc
+        ex de,hl
+        cp 256-60
 	jp nc,.3
         ex af,af'
-	ld hl,$7999
-	ld de,$5a82
-        push de
+        ld bc,$7999
+        add hl,bc
+        ld bc,$5a82
+        ex de,hl
+        adc hl,bc
         push hl
+        push de
+        ; (b and c) or ((not b) and d)
 	ld hl,(sha1_h1)
         ld de,(sha1_h2)
         ld bc,(sha1_h3)
@@ -196,27 +211,34 @@ sha1_chunk:
         cp 256-40
 	jp nc,.4
         ex af,af'
-	ld hl,$eba1
-	ld de,$6ed9
-        push de
+        ld bc,$eba1
+        add hl,bc
+        ld bc,$6ed9
+        ex de,hl
+        adc hl,bc
         push hl
+        push de
         jp .7
 .4:
         cp 256-20
 	jp nc,.5
         ex af,af'
-	ld hl,$bcdc
-	ld de,$8f1b
-        push de
+        ld bc,$bcdc
+        add hl,bc
+        ld bc,$8f1b
+        ex de,hl
+        adc hl,bc
         push hl
+        push de
+        ; (b and c) or (b and d) or (c and d)
 	ld hl,(sha1_h1)
         ld de,(sha1_h2)
         ld bc,(sha1_h3)
-        ld a,e
+        ld a,e  ; Boolean optimization: (c or d) and b
         or c
         and l
 	ld l,a
-        ld a,e
+        ld a,e  ; or (c and d)
         and c
         or l
         ld l,a
@@ -249,11 +271,15 @@ sha1_chunk:
 	jp .6
 .5:
         ex af,af'
-	ld hl,$c1d6
-	ld de,$ca62
-        push de
+        ld bc,$c1d6
+        add hl,bc
+        ld bc,$ca62
+        ex de,hl
+        adc hl,bc
         push hl
+        push de
 .7:
+        ; b xor c xor d
         ld hl,(sha1_h1)
         ld de,(sha1_h2)
         ld bc,(sha1_h3)
@@ -276,53 +302,42 @@ sha1_chunk:
         xor b
 	ld d,a
 .6:
-	ld bc,(sha1_h4)
-	add hl,bc
-	ld bc,(sha1_h4+2)
-	ex de,hl
-	adc hl,bc
-	ex de,hl
+        ; f is DEHL
+        ; k is saved on stack and added before with sha1_h4 (e) and w[i].
+        ; w[i] is pointed by IX.
+        ; temp = f + e + k + w[i] + (a leftrotate 5)
 	pop bc
 	add hl,bc
 	pop bc
-	ex de,hl
-	adc hl,bc
-	ex de,hl
-	ld c,(ix+3)
-	ld b,(ix+2)
-	add hl,bc
-	ld c,(ix+1)
-	ld b,(ix+0)
 	ex de,hl
 	adc hl,bc
         push hl
-        push de
 	ld hl,(sha1_h0)
-        ld de,(sha1_h0+2)
-	ld a,d
-	rla
-        adc hl,hl
-	rl e
-	rl d
-	rla
-        adc hl,hl
-	rl e
-	rl d
-	rla
-        adc hl,hl
-	rl e
-	rl d
-	rla
-        adc hl,hl
-	rl e
-	rl d
-	rla
-        adc hl,hl
-	rl e
-	rl d
-	pop bc
-	add hl,bc
-	pop bc
+        ld bc,(sha1_h0+2)
+        ; Rotate left 5 replaced by
+        ; fast 8-bit rotation to left + 3 bits right
+        ld a,b
+        ld b,c
+        ld c,h
+        ld h,l
+        ld l,a
+        rra
+        rr b
+        rr c
+        rr h
+        rr l
+        rra
+        rr b
+        rr c
+        rr h
+        rr l
+        rra
+        rr b
+        rr c
+        rr h
+        rr l
+        add hl,de
+        pop de
 	ex de,hl
 	adc hl,bc
 	ex de,hl
