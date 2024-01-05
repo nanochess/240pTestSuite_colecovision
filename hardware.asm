@@ -349,6 +349,10 @@ bios_test:
         ld de,$0820
         ld a,$4e
         call show_message
+        ld hl,hardware_msg_2
+        ld de,$0920
+        ld a,$6e
+        call show_message
 
     if COLECO
         call crc32_init
@@ -468,7 +472,7 @@ bios_test:
 
     if COLECO
         ld ix,goodcol_data
-        ld b,4
+        ld b,4          ; Number of signatures.
 .0:
         ld a,l
         cp (ix+0)
@@ -500,10 +504,45 @@ bios_test:
         inc ix
         push ix
         pop hl
-        ld de,$0a20
+        ld de,$0b20
         ld a,$1e
         call show_message
 
+    endif
+
+    if MSX
+        ld ix,msx_data
+        ld c,2          ; Number of signatures.
+.4:
+        ld hl,sha1_h0
+        push ix
+        pop de
+        ld b,20
+.5:
+        ld a,(de)
+        cp (hl)
+        jr nz,.6
+        inc de
+        inc hl
+        djnz .5
+        jp .7
+.6:
+        ld de,20
+        add ix,de
+        ld a,(ix+0)
+        inc ix
+        or a
+        jr nz,$-6
+        dec c
+        jp nz,.4
+.7:
+        ld de,20
+        add ix,de
+        push ix
+        pop hl
+        ld de,$0c20
+        ld a,$1e
+        call show_message
     endif
 .2:     halt
         call read_joystick_button_debounce
@@ -620,8 +659,12 @@ generate_hex:
         inc ix
         ret
 
+        ; Currently a maximum of 24 characters for each description.
+
+    if COLECO
         ;
         ; Data from https://github.com/SnowflakePowered/opengood/
+        ; CRC32 hashes.
         ;
 goodcol_data:
         db $f3,$3e,$a9,$3a
@@ -634,6 +677,30 @@ goodcol_data:
         db "BIOS + CoolCV fast boot",0
         db $00,$00,$00,$00
         db "Unrecognized BIOS",0
+    endif
+
+    if MSX
+        ; SHA1 hashes.
+msx_data:
+        ; I've one of these.
+        db $e2,$fb,$d5,$6e,$42
+        db $da,$63,$76,$09,$d2
+        db $3a,$e9,$df,$9e,$fd
+        db $1b,$42,$41,$b1,$8a
+        db "Sony HB-F1XDJ MSX2+",0
+        ; My National CF2000
+        ; but also some other MSX computers.
+        db $30,$2a,$fb,$5d,$8b
+        db $e2,$6c,$75,$83,$09
+        db $ca,$3d,$f6,$11,$ae
+        db $69,$cc,$ed,$28,$21
+        db "Generic Japan MSX1",0
+        db $00,$00,$00,$00,$00
+        db $00,$00,$00,$00,$00
+        db $00,$00,$00,$00,$00
+        db $00,$00,$00,$00,$00
+        db 0
+    endif
 
 hardware_msg_1:
     if COLECO
@@ -642,6 +709,8 @@ hardware_msg_1:
     if MSX
         db "BIOS SHA1:",0
     endif
+hardware_msg_2:
+        db "Wait...",0
 hardware_msg_5:
         db "   1           2",0
 hardware_msg_6:

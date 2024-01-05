@@ -1317,6 +1317,13 @@ menu_audio:
         ; A = Color.
         ;
 show_message:
+        ; Needed to avoid a zero byte update (turning into 65536 bytes).
+        ex af,af'
+        ld a,(hl)
+        or a    ; Nothing to show?
+        ret z   ; No, return.
+        ex af,af'
+
         push af
         push de
         push hl
