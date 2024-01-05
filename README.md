@@ -23,7 +23,7 @@ Other utilities required are Pletter to compress the VDP data, and TMSColor to c
 ===============================================================================
 Original 240p Test Suite is © Copyright 2011-2021 Artemio Urbina
 
-Colecovision/MSX version is © Copyright 2023 Oscar Toledo G.
+Colecovision/MSX/SG1000 version is © Copyright 2023-2024 Oscar Toledo G.
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
 
