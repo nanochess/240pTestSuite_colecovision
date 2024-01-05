@@ -2,6 +2,7 @@
 	; SHA-1 function.
 	;
 	; by Oscar Toledo G.
+	; https://nanochess.org/
 	;
 	; I'm thereby making this code public domain for your Z80 projects.
 	;
@@ -14,7 +15,7 @@
 	;
 
         ; The memory work area needed.
-;sha1_h0:    rb 4
+;sha1_h0:        rb 4
 ;sha1_h1:        rb 4
 ;sha1_h2:        rb 4
 ;sha1_h3:        rb 4
