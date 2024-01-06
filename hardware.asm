@@ -506,13 +506,13 @@ bios_test:
         pop hl
         ld de,$0b20
         ld a,$1e
-        call show_message
+        call show_message_multiline
 
     endif
 
     if MSX
         ld ix,msx_data
-        ld c,2          ; Number of signatures.
+        ld c,3          ; Number of signatures.
 .4:
         ld hl,sha1_h0
         push ix
@@ -542,7 +542,7 @@ bios_test:
         pop hl
         ld de,$0c20
         ld a,$1e
-        call show_message
+        call show_message_multiline
     endif
 .2:     halt
         call read_joystick_button_debounce
@@ -694,7 +694,30 @@ msx_data:
         db $e2,$6c,$75,$83,$09
         db $ca,$3d,$f6,$11,$ae
         db $69,$cc,$ed,$28,$21
-        db "Generic Japan MSX1",0
+        db "Canon V-8/10/20,"
+        db "Casio PV-7/16,"
+        db "Fujitsu FM-X,"
+        db "Mitsubishi ML-F110/120,"
+        db "National CF-2000,"
+        db "Pionner PX-7/V60,"
+        db "Sony HB-10/101/201,"
+        db "Sony HB-501/701FD,"
+        db "Toshiba HX-22",0
+
+        db $89,$63,$fc,$04,$19
+        db $75,$f3,$1d,$c2,$ab
+        db $10,$19,$cf,$dd,$49
+        db $67,$99,$9d,$e5,$3e
+        db "Canon V-20E,"
+        db "JVC HC-7GB,"
+        db "Mitsubishi ML-F48/80,"
+        db "Pioneer PX-7UK,"
+        db "Sanyo Wavy MPC-10/100,"
+        db "Sony HB-55P/75P,"
+        db "Yamaha CX5M,"
+        db "YIS-503F,"
+        db "Yashica YC-64",0
+
         db $00,$00,$00,$00,$00
         db $00,$00,$00,$00,$00
         db $00,$00,$00,$00,$00

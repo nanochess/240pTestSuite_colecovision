@@ -1312,6 +1312,47 @@ menu_audio:
         dw $0000
 
         ;
+        ; HL = Pointer to multiline string (separated with comma).
+        ; DE = Pointer to VRAM.
+        ; A = Color.
+        ;
+show_message_multiline:
+        push af
+.3:     push de
+        ld de,buffer
+.2:
+        ld a,(hl)
+        or a
+        jr z,.1
+        cp $2c
+        jr z,.1
+        ld (de),a
+        inc hl
+        inc de
+        jr .2
+
+.1:     xor a
+        ld (de),a
+        pop de
+        pop af
+        push af
+        push hl
+        push de
+        ld hl,buffer
+        call show_message
+        pop de
+        inc d
+        pop hl
+        ld a,(hl)
+        inc hl
+        or a
+        jr nz,.3
+        pop af
+        ret
+
+
+
+        ;
         ; HL = Pointer to string (terminated with zero byte).
         ; DE = Pointer to VRAM.
         ; A = Color.
