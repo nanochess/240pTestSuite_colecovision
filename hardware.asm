@@ -558,7 +558,12 @@ bios_test:
         ; Memory viewer
         ;
 memory_viewer:
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_2
+    else
         call DISSCR
+    endif
         call load_letters
         ld hl,$3800
         ld bc,$0300
@@ -638,6 +643,10 @@ memory_viewer:
 .7:     cpl
         and $e0
         jp z,.5
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_4
+    endif
         call reload_menu
         jp hardware_menu
 
@@ -681,6 +690,9 @@ goodcol_data:
 
     if MSX
         ; SHA1 hashes.
+        ; Descriptions:
+        ;  Maximum width = 24 characters.
+        ;  Maximum height = 10 rows.
 msx_data:
         ; I've one of these.
         db $e2,$fb,$d5,$6e,$42

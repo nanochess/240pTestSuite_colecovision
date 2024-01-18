@@ -69,7 +69,11 @@ patterns_menu:
         jp main_menu
 
 patterns_color_bleed:
+    if MSX
+        call fast_vdp_mode_2
+    else
         call DISSCR
+    endif
         call clear_sprites
         ld hl,.vertical
         ld de,$0400
@@ -137,6 +141,10 @@ patterns_color_bleed:
         ld a,15
         ld (debounce),a
 
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_4
+    endif
         call reload_menu
         jp patterns_menu
 
@@ -177,7 +185,11 @@ patterns_color_bleed:
         db $aa,$55,$aa,$55,$aa,$55,$aa,$55
 
 patterns_circles:
+    if MSX
+        call fast_vdp_mode_2
+    else
         call DISSCR
+    endif
         call clear_sprites
         call highres
         call nmi_off
@@ -200,11 +212,94 @@ patterns_circles:
         ld a,15
         ld (debounce),a
 
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_4
+    endif
         call reload_menu
         jp patterns_menu
 
 patterns_monoscope:
+    if MSX
+        call is_it_msx2
+        jp nc,.0
         call DISSCR
+        call clear_sprites2
+        ld a,2
+        ld ($7000),a
+        ld hl,msx2_default_palette
+        call set_palette
+        ld hl,monoscopem2
+        ld de,$0000
+        call unpack2
+        ld a,1
+        ld ($7000),a
+        call ENASCR
+        ld a,7
+        ld (alternate),a
+.4:
+        halt
+        call read_joystick_button_debounce
+        bit 1,a
+        jr nz,.5
+        ld a,15
+        ld (debounce),a
+        ld a,(alternate)
+        cp 7
+        jr z,$+3
+        inc a
+        ld (alternate),a
+        call .change_color2
+        jr .4
+
+.5:     bit 3,a
+        jr nz,.6
+        ld a,15
+        ld (debounce),a
+        ld a,(alternate)
+        or a
+        jr z,$+3
+        dec a
+        ld (alternate),a
+        call .change_color2
+        jr .4
+
+.change_color2:
+        di
+        ld a,$0f        ; Palette index.
+        out ($99),a
+        ld a,$90        ; Register 16: Palette index.
+        out ($99),a
+        ld a,(alternate)
+        ld b,a
+        ld a,(alternate)
+        rlca
+        rlca
+        rlca
+        rlca
+        or b
+        out ($9a),a
+        and $0f
+        out ($9a),a
+        ei
+        ret
+
+.6:
+        cpl
+        and $e0
+        jr z,.4
+        ld a,15
+        ld (debounce),a
+
+        call fast_vdp_mode_4
+        call reload_menu
+        jp patterns_menu
+
+.0:
+        call fast_vdp_mode_2
+    else
+        call DISSCR
+    endif
         call clear_sprites
         call highres
         ld hl,monoscope0
@@ -262,6 +357,10 @@ patterns_monoscope:
         ld a,15
         ld (debounce),a
 
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_4
+    endif
         call reload_menu
         jp patterns_menu
 
@@ -269,18 +368,18 @@ patterns_monoscope:
         ld a,(alternate)
         cp 1
         ld c,$11
-        jr c,.4
+        jr c,.7
         ld c,$e1
-        jr z,.4
+        jr z,.7
         ld c,$f1
-.4:
+.7:
         ld hl,$2000
         ld b,24
-.5:
+.8:
         call nmi_off
         call .do256
         call nmi_on
-        djnz .5
+        djnz .8
         ret
 
 .do256:
@@ -340,7 +439,11 @@ patterns_monoscope:
         db 150-1,178,$04,$06
 
 patterns_grid:
+    if MSX
+        call fast_vdp_mode_2
+    else
         call DISSCR
+    endif
         call clear_sprites
         call highres
         ld hl,.grid_bitmap
@@ -409,6 +512,10 @@ patterns_grid:
         ld a,15
         ld (debounce),a
 
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_4
+    endif
         call reload_menu
         jp patterns_menu
 
@@ -455,7 +562,11 @@ patterns_grid:
         db $86,$87,$86,$87
 
 patterns_white:
+    if MSX
+        call fast_vdp_mode_2
+    else
         call DISSCR
+    endif
         call clear_sprites
         ld hl,.block
         ld de,$0400
@@ -522,6 +633,10 @@ patterns_white:
         jr z,.1
         ld a,15
         ld (debounce),a
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_4
+    endif
         call reload_menu
         jp patterns_menu
 
@@ -535,7 +650,11 @@ patterns_white:
         db $01,$01,$01,$01,$01,$01,$01,$01
 
 patterns_sharpness:
+    if MSX
+        call fast_vdp_mode_2
+    else
         call DISSCR
+    endif
         call clear_sprites
         call highres
         ld hl,sharpness0
@@ -555,6 +674,10 @@ patterns_sharpness:
         ld a,15
         ld (debounce),a
 
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_4
+    endif
         call reload_menu
         jp patterns_menu
 
@@ -564,7 +687,11 @@ sharpness1:
         incbin "sharpness1.bin"
 
 patterns_vdp_color_bars:
+    if MSX
+        call fast_vdp_mode_2
+    else
         call DISSCR
+    endif
         call clear_sprites
         ld hl,bars1_dat
         ld de,$2400
@@ -662,6 +789,10 @@ patterns_vdp_color_bars:
         ld a,15
         ld (debounce),a
 
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_4
+    endif
         call reload_menu
         jp patterns_menu
 

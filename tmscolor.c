@@ -32,7 +32,7 @@
 #include <limits.h>
 #include <math.h>
 
-#define VERSION "2.0.4 Jan/09/2023"     /* Software version */
+#define VERSION "2.0.5 Jan/10/2024"     /* Software version */
 
 #define ROUND8(x)  ((x + 7) & ~7)
 
@@ -491,6 +491,7 @@ int main(int argc, char *argv[])
     int photo = 0;
     int tiled = 0;
     int start_tile = 0;
+    int msx2 = 0;
     char *output_file = NULL;
     
     time_t actual;
@@ -505,6 +506,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Usage:\n\n");
         fprintf(stderr, "    tmscolor [-s] [-e45d2] [-m] image.bmp image.bin\n");
         fprintf(stderr, "        Creates image for use with assembler code\n\n");
+        fprintf(stderr, "    -v     Generate MSX2 bitmapx.\n");
         fprintf(stderr, "    -s     Process tiles in chunks of 16 pixels high (sprites).\n");
         fprintf(stderr, "    -t     Generates minimum of tiles required.\n");
         fprintf(stderr, "    -t01   Same but starting at tile $01 ($00-$ff).\n");
@@ -538,7 +540,9 @@ int main(int argc, char *argv[])
     while (arg < argc && argv[arg][0] == '-') {
         bad = 0;
         c = tolower(argv[arg][1]);
-        if (c == 'f') {
+        if (c == 'v') {
+                msx2 = 1;
+        } else if (c == 'f') {
             d = tolower(argv[arg][2]);
             if (d == 'x')
                 flip_x = 1;
@@ -647,12 +651,17 @@ int main(int argc, char *argv[])
         size_y = -size_y;
         n = 1;
     }
-    if ((size_x & 7) != 0) {
+    if (!msx2 && (size_x & 7) != 0) {
         fprintf(stderr, "The input file doesn't measure a multiple of 8 in X size (it's %d pixels)\n", size_x);
         fclose(a);
         exit(3);
     }
-    if ((size_y & 7) != 0) {
+    if (msx2 && (size_x & 1) != 0) {
+        fprintf(stderr, "The input file doesn't measure a multiple of 2 in X size (it's %d pixels)\n", size_x);
+        fclose(a);
+        exit(3);
+    }
+    if (!msx2 && (size_y & 7) != 0) {
         fprintf(stderr, "The input file doesn't measure a multiple of 8 in Y size (it's %d pixels)\n", size_y);
         fclose(a);
         exit(3);
@@ -662,9 +671,14 @@ int main(int argc, char *argv[])
         fclose(a);
         exit(3);
     }
+    if (msx2 && (photo || magic_sprites || tiled)) {
+        fprintf(stderr, "MSX2 option not implemented with -p, -m, or -t\n");
+        fclose(a);
+        exit(3);
+    }
     bitmap = malloc(size_x * size_y / 8);
     color = malloc(size_x * size_y / 8);
-    pattern = malloc(size_x / 8 * size_y / 8);
+    pattern = malloc((size_x + 7) / 8 * size_y / 8);
     source = malloc(size_x * size_y);
     source2 = malloc(size_x * size_y);
     ignore = malloc(size_x * size_y);
@@ -1028,6 +1042,7 @@ int main(int argc, char *argv[])
     }
 hack:
     //	fprintf(stderr, "Processing image...\n");
+    if (!msx2) {
     for (c = 0; c < size_y; c++) {
         for (d = 0; d < size_x; d += 8) {
             offset = c / 8 * size_x + (c & 7) + d;
@@ -1071,6 +1086,7 @@ hack:
             bitmap[offset] = r;
             offset += 8;
         }
+    }
     }
     /* Generate output file */
     if (output_file != NULL) {
@@ -1169,6 +1185,13 @@ hack:
                 fwrite(bitmap + (c / 8 + 1) * size_x + d, 1, 8, a);
             }
         }
+    } else if (msx2) {
+    for (c = 0; c < size_y; c++) {
+    for (d = 0; d < size_x; d += 2) {
+        buffer[0] = (source[c * size_x + d] << 4) | source[c * size_x + d + 1];
+    fwrite(&buffer[0], 1, 1, a);
+    }
+    }
     } else {
         fwrite(bitmap, 1, size_x * size_y / 8, a);
         fwrite(color, 1, size_x * size_y / 8, a);

@@ -33,6 +33,16 @@ COLECO: equ 1   ; Define this to 1 for Colecovision
 MSX:    equ 0   ; Define this to 1 for MSX
 SG1000: equ 0   ; Define this to 1 for SG1000
 
+BASE_MENU:      equ $0820
+
+        ;
+        ; MSX2 definitions.
+        ;
+BASE_MENU2:     equ $2410
+MSX2_SPRITE_SAT:equ $fe00
+RG9SAV:         equ $ffe9
+RG11SAV:        equ $ffeb
+
 ram_base:       equ $E000-$7000*COLECO-$2000*SG1000
 VDP:            equ $98+$26*COLECO+$26*SG1000
                          
@@ -178,6 +188,486 @@ rotate_slot:
 .1:     and 3
         pop bc
         ret
+
+        ;
+        ; Detect a MSX2.
+        ; Returns Carry flag set if it is MSX2.
+        ;
+is_it_msx2:
+        ld a,($002d)
+        cp 1
+        ccf
+        ret
+
+        ;
+        ; Set palette for MSX2/MSX2+/MSX-Turbo R.
+        ; HL = Pointer to palette (16 colors, each 2 bytes)
+        ;
+set_palette:
+        di
+        xor a           ; Palette index.
+        out ($99),a
+        ld a,$90        ; Register 16: Palette index.
+        out ($99),a
+        ld bc,$209a     ; 32 bytes thru port $9A.
+        otir
+        ei
+        ret
+
+        ;
+        ; Default MSX2 palette
+        ;
+        ; Color format:
+        ;
+        ; bit 7 6 5 4 3 2 1 0
+        ;     0 r r r 0 b b b - byte 0
+        ;     0 0 0 0 0 g g g - byte 1
+msx2_default_palette:
+        db $00,$00
+        db $00,$00
+        db $11,$06
+        db $33,$07
+        db $17,$01
+        db $27,$03
+        db $51,$01
+        db $27,$06
+        db $71,$01
+        db $73,$03
+        db $61,$06
+        db $64,$06
+        db $11,$04
+        db $65,$02
+        db $55,$05
+        db $77,$07
+
+msx2_logo_palette:
+        db $00,$00      ; 0 - Transparent
+        db $00,$00      ; 1 - Black
+        db $30,$02      ; 2 - Hair.
+        db $33,$06      ; 3 - Bright green
+        db $06,$00      ; 4 - Deep blue.
+        db $27,$03      ; 5 - Blue.
+        db $54,$01      ; 6 - Dark red.
+        db $27,$06      ; 7 - Cyan.
+        db $75,$03      ; 8 - Red.
+        db $62,$03      ; 9 - Dark yellow.
+        db $60,$05      ; 10 - Yellow.
+        db $64,$06      ; 11 - Bright yellow.
+        db $00,$04      ; 12 - Dark green.
+        db $55,$00      ; 13 - Purple.
+        db $63,$05      ; 14 - Gray.
+        db $77,$07      ; 15 - White.
+
+msx2_title_palette:
+        db $00,$00      ; 0 - Transparent
+        db $00,$00      ; 1 - Black
+        db $22,$02      ; 2 - Darker gray.
+        db $31,$02      ; 3 - Coat.
+        db $05,$00      ; 4 - Deep blue.
+        db $27,$03      ; 5 - Blue.
+        db $51,$01      ; 6 - Dark red.
+        db $41,$03      ; 7 - Light-Bright coat.
+        db $30,$02      ; 8 - Coat.
+        db $52,$04      ; 9 - Bright coat.
+        db $63,$04      ; 10 - Skin.
+        db $75,$06      ; 11 - Bright skin.
+        db $11,$01      ; 12 - Almost black.
+        db $44,$00      ; 13 - Purple.
+        db $33,$03      ; 14 - Dark gray.
+        db $77,$07      ; 15 - White.
+
+msx2_donna_palette:
+        db $00,$00      ; 0 - Transparent
+        db $00,$00      ; 1 - Black
+        db $52,$02      ; 2 - Hair.
+        db $64,$04      ; 3 - Light hair.
+        db $24,$02      ; 4 - Deep blue pants.
+        db $46,$04      ; 5 - Blue pants.
+        db $52,$03      ; 6 - Dark skin.
+        db $70,$05      ; 7 - Pupil.
+        db $75,$06      ; 8 - Skin.
+        db $76,$07      ; 9 - Light skin.
+        db $71,$05      ; 10 - Dark shirt.
+        db $74,$07      ; 11 - Shirt.
+        db $20,$00      ; 12 - Dark hair.
+        db $57,$05      ; 13 - Background.
+        db $33,$03      ; 14 - Dark gray.
+        db $77,$07      ; 15 - White.
+
+SETWRT2:
+        ld a,h
+        and $c0
+        rlca
+        rlca
+        out (VDP+1),a
+        ld a,$8e
+        out (VDP+1),a
+	ld a,l
+	out (VDP+1),a
+	ld a,h
+        and $3f
+	or $40
+	out (VDP+1),a
+	ret
+
+SETRD2:
+        ld a,h
+        and $c0
+        rlca
+        rlca
+        out (VDP+1),a
+        ld a,$8e
+        out (VDP+1),a
+        ld a,l
+        out (VDP+1),a
+        ld a,h
+        and $3f
+        out (VDP+1),a
+        nop
+        ret
+
+WRTVRM2:
+	push af
+        call SETWRT2
+	pop af
+	out (VDP),a
+	ret
+
+RDVRM2:
+        call SETRD2
+        ex (sp),hl
+        ex (sp),hl
+        in a,(VDP)
+        ret
+
+FILVRM2:
+	push af
+        call SETWRT2
+.1:	pop af
+	out (VDP),a
+	push af
+	dec bc
+	ld a,b
+	or c
+	jp nz,.1
+	pop af
+	ret
+
+LDIRVM2:
+        EX DE,HL
+        CALL SETWRT2
+        EX DE,HL
+        DEC BC
+        INC C
+        LD A,B
+        LD B,C
+        INC A
+        LD C,VDP
+.1:     OUTI
+        JP NZ,.1
+        DEC A
+        JP NZ,.1
+        RET
+
+LDIRMV2:
+        call SETRD2
+        ex (sp),hl
+        ex (sp),hl
+.1:     in a,(VDP)
+        ld (de),a
+        inc de
+        dec bc
+        ld a,b
+        or c
+        jp nz,.1
+        ret
+
+convert_menu2:
+        inc d
+        sla d
+        sla d
+        srl e
+        ret
+
+draw_letter2:
+        push hl
+        push de
+        sub $20
+        ld l,a
+        ld h,0
+        add hl,hl
+        add hl,hl
+        add hl,hl
+        ld bc,font_bitmaps
+        add hl,bc
+        ex af,af'
+        ld c,a
+        ex af,af'
+        ld a,c
+        and $f0
+        ld c,a
+        rrca
+        rrca
+        rrca
+        rrca
+        or c
+        ld c,a
+        ld de,bitmap_letters
+.1:
+        bit 7,(hl)
+        ld b,$e0
+        jr z,$+6
+        ld a,c
+        and $f0
+        ld b,a
+        bit 6,(hl)
+        ld a,$0e
+        jr z,$+5
+        ld a,c
+        and $0f
+        or b
+        ld (de),a
+        inc de
+        bit 5,(hl)
+        ld b,$e0
+        jr z,$+6
+        ld a,c
+        and $f0
+        ld b,a
+        bit 4,(hl)
+        ld a,$0e
+        jr z,$+5
+        ld a,c
+        and $0f
+        or b
+        ld (de),a
+        inc de
+        bit 3,(hl)
+        ld b,$e0
+        jr z,$+6
+        ld a,c
+        and $f0
+        ld b,a
+        bit 2,(hl)
+        ld a,$0e
+        jr z,$+5
+        ld a,c
+        and $0f
+        or b
+        ld (de),a
+        inc de
+        inc hl
+        ld a,e
+        cp 255 and (bitmap_letters+3*8)
+        jp nz,.1
+        pop de
+        push de
+        di
+        ld hl,bitmap_letters
+        ld bc,$0003
+        call LDIRVM2
+        ex de,hl
+        ld bc,$0080
+        add hl,bc
+        ex de,hl
+        ld c,$03
+        call LDIRVM2
+        ex de,hl
+        ld bc,$0080
+        add hl,bc
+        ex de,hl
+        ld c,$03
+        call LDIRVM2
+        ex de,hl
+        ld bc,$0080
+        add hl,bc
+        ex de,hl
+        ld c,$03
+        call LDIRVM2
+        ex de,hl
+        ld bc,$0080
+        add hl,bc
+        ex de,hl
+        ld c,$03
+        call LDIRVM2
+        ex de,hl
+        ld bc,$0080
+        add hl,bc
+        ex de,hl
+        ld c,$03
+        call LDIRVM2
+        ex de,hl
+        ld bc,$0080
+        add hl,bc
+        ex de,hl
+        ld c,$03
+        call LDIRVM2
+        ex de,hl
+        ld bc,$0080
+        add hl,bc
+        ex de,hl
+        ld c,$03
+        call LDIRVM2
+        ei
+        pop hl
+        inc hl
+        inc hl
+        inc hl
+        ex de,hl
+        pop hl
+        ret
+
+clear_sprites2:
+        call nmi_off
+        ld hl,MSX2_SPRITE_SAT
+        ld a,$d8
+	ld bc,$0080
+        call FILVRM2
+        jp nmi_on
+
+        ;
+        ; Pletter-0.5c decompressor (XL2S Entertainment & Team Bomba)
+        ;
+unpack2:
+; Initialization
+        ld a,(hl)
+        inc hl
+	exx
+        ld de,0
+        add a,a
+        inc a
+        rl e
+        add a,a
+        rl e
+        add a,a
+        rl e
+        rl e
+        ld hl,.modes
+        add hl,de
+        ld c,(hl)
+        inc hl
+        ld b,(hl)
+        push bc
+        pop ix
+        ld e,1
+	exx
+        ld iy,.loop
+
+; Main depack loop
+.literal:
+        call nmi_off
+.literal2:
+        ex af,af'
+        ld a,(hl)
+        ex de,hl
+        call WRTVRM2
+        ex de,hl
+        inc hl
+        inc de
+        ex af,af'
+.loop:   add a,a
+        call z,.getbit
+        jr nc,.literal2
+        call nmi_on
+
+; Compressed data
+	exx
+        ld h,d
+        ld l,e
+.getlen: add a,a
+        call z,.getbitexx
+        jr nc,.lenok
+.lus:    add a,a
+        call z,.getbitexx
+        adc hl,hl
+        ret c   
+        add a,a
+        call z,.getbitexx
+        jr nc,.lenok
+        add a,a
+        call z,.getbitexx
+        adc hl,hl
+        ret c  
+        add a,a
+        call z,.getbitexx
+        jr c,.lus
+.lenok:  inc hl
+	exx
+        ld c,(hl)
+        inc hl
+        ld b,0
+        bit 7,c
+        jr z,.offsok
+        jp (ix)
+
+.mode6:  add a,a
+        call z,.getbit
+        rl b
+.mode5:  add a,a
+        call z,.getbit
+        rl b
+.mode4:  add a,a
+        call z,.getbit
+        rl b
+.mode3:  add a,a
+        call z,.getbit
+        rl b
+.mode2:  add a,a
+        call z,.getbit
+        rl b
+        add a,a
+        call z,.getbit
+        jr nc,.offsok
+        or a
+        inc b
+        res 7,c
+.offsok: inc bc
+        push hl
+	exx
+        push hl
+	exx
+        ld l,e
+        ld h,d
+        sbc hl,bc
+        pop bc
+        ex af,af'
+        call nmi_off
+.loop2:
+        call RDVRM2              ; unpack
+        ex de,hl
+        call WRTVRM2
+        ex de,hl        ; 4
+        inc hl          ; 6
+        inc de          ; 6
+        dec bc          ; 6
+        ld a,b          ; 4
+        or c            ; 4
+        jp nz,.loop2     ; 10
+        call nmi_on
+        ex af,af'
+        pop hl
+        jp (iy)
+
+.getbit: ld a,(hl)
+        inc hl
+	rla
+	ret
+
+.getbitexx:
+	exx
+        ld a,(hl)
+        inc hl
+	exx
+	rla
+	ret
+
+.modes:
+        dw      .offsok
+        dw      .mode2
+        dw      .mode3
+        dw      .mode4
+        dw      .mode5
+        dw      .mode6
 
     endif
 
@@ -617,6 +1107,11 @@ START:
 
     endif
     if MSX
+        xor a
+        ld ($6000),a    ; This bank. Already it is zero, or we wouldn't boot.
+        inc a
+        ld ($7000),a    ; Secondary bank at $8000-$bfff.
+
 	ld sp,stack
 	; Sound guaranteed to be off
         ld hl,nmi_handler
@@ -640,7 +1135,7 @@ START:
         ld a,50
         ld (frames_per_sec),a
         call RSLREG
-        ld b,0          ; $4000-$7fff
+        ld b,0          ; $0000-$3fff
         call get_slot_mapping
         ld (bios_rom),a
         call RSLREG
@@ -683,7 +1178,11 @@ START:
 
 logo_screen:
         call vdp_mode_2
-
+    if MSX
+        call is_it_msx2
+        ld hl,msx2_logo_palette
+        call c,set_palette
+    endif
         ld hl,nanochess_dat
         ld de,$0400
         ld bc,$37*8
@@ -723,8 +1222,15 @@ logo_screen:
         djnz $-1
 
 title_screen:
-        call vdp_mode_2
-
+    if MSX
+        call is_it_msx2
+        jr nc,.1
+        call fast_vdp_mode_4
+        jr .2
+.1:
+    endif
+        call fast_vdp_mode_2
+.2:
         call reload_menu
 
 main_menu:
@@ -785,7 +1291,12 @@ audio_test:
         ; Audio Sync Test.
         ;
 audio_sync_test:
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_2
+    else
         call DISSCR
+    endif
         call clear_sprites
         call highres
         ld hl,.void
@@ -900,6 +1411,10 @@ audio_sync_test:
         ld a,15
         ld (debounce),a
 
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_4
+    endif
         call reload_menu
         jp audio_menu
 
@@ -1009,7 +1524,7 @@ credits_text:
         db "Colecovision Developer:",0
     endif
     if MSX
-        db "MSX1 Developer:",0
+        db "MSX1/2 Developer:",0
     endif
     if SG1000
         db "SG1000 Developer:",0
@@ -1035,7 +1550,7 @@ credits_text:
         dw $1420
         db $de,"http://junkerhq.net/xrgb",0
         dw $1520
-        db $ce,"Build date: Jan/04/2024",0
+        db $ce,"Build date: Jan/17/2024",0
         dw $0000
 
 reload_menu:
@@ -1046,6 +1561,18 @@ reload_menu:
         call WRTVDP
         call nmi_on
 
+    if MSX
+        call is_it_msx2
+        jp nc,.1
+        call clear_sprites2
+        ld hl,title_msx2
+        ld de,$0000
+        call unpack2
+        ld hl,msx2_title_palette
+        call set_palette
+        jp ENASCR
+.1:
+    endif
         ld bc,$0e02
         call nmi_off
         call WRTVDP
@@ -1072,16 +1599,6 @@ reload_menu:
         call clean_menu
 
         jp ENASCR
-
-bug_warning:
-        ld hl,bug_1
-        ld de,$0410
-        ld a,$f6
-        call show_message
-        jr $
-
-bug_1:
-        db "You have found a bug :P",0
 
 decimal_number:
         ld b,0
@@ -1128,7 +1645,28 @@ load_letters:
         jp nmi_on
 
 clean_menu:
-        ld hl,$0820
+    if MSX
+        call is_it_msx2
+        jp nc,.0
+        ld hl,BASE_MENU2
+        ld b,$0e*8
+.2:     push bc
+        push hl
+        ld bc,$0048
+        ld a,$ee
+        call nmi_off
+        call FILVRM2
+        call nmi_on
+        pop hl
+        ld bc,$0080
+        add hl,bc
+        pop bc
+        djnz .2
+        ret
+
+.0:        
+    endif
+        ld hl,BASE_MENU
         ld b,$0e
 .1:     push bc
         push hl
@@ -1257,6 +1795,98 @@ illuminate_menu:
         push de
         push hl
         push af
+    if MSX
+        call is_it_msx2
+        jp nc,.0
+        ld e,(hl)
+        inc hl
+        ld d,(hl)
+        inc hl
+        inc hl          ; Avoid first character
+        call convert_menu2
+        ld bc,0
+.3:
+        ld a,(hl)
+        or a
+        jr z,.4
+        inc c
+        inc c
+        inc c
+        inc hl
+        jr .3
+
+.4:     pop af
+        and $f0
+        ld h,a
+        rrca
+        rrca
+        rrca
+        rrca
+        ld l,a
+        push hl
+        exx
+        pop hl
+        exx
+        ld a,8
+.5:     push af
+        push de
+        ex de,hl
+        ld de,bitmap_letters
+        push bc
+        di
+        call LDIRMV2
+        ei
+        pop bc
+        push bc
+        exx
+        push hl
+        exx
+        pop de
+        ld hl,bitmap_letters
+        ld b,c
+.6:     ld a,(hl)
+        cp $ee
+        jp z,.7
+        and $f0
+        cp $e0
+        jp z,.8
+        ld a,(hl)
+        and $0f
+        or d
+        ld (hl),a
+        xor d
+        cp $0e
+        jp z,.7
+.8:     ld a,(hl)
+        and $f0
+        or e
+        ld (hl),a
+.7:     inc hl
+        djnz .6
+        pop bc
+        pop de
+        ld hl,bitmap_letters
+        push de
+        push bc
+        di
+        call LDIRVM2
+        ei
+        pop bc
+        pop de
+        ld a,e
+        add a,$80
+        ld e,a
+        jr nc,$+3
+        inc d
+        pop af
+        dec a
+        jr nz,.5
+        pop hl
+        pop de
+        pop bc
+        ret
+.0:
+    endif
         ld e,(hl)
         inc hl
         ld d,(hl)
@@ -1350,7 +1980,12 @@ show_message_multiline:
         pop af
         ret
 
-
+show_message_vdp2:
+        ex af,af'
+        ld a,(hl)
+        or a
+        ret z
+        jr show_message.5
 
         ;
         ; HL = Pointer to string (terminated with zero byte).
@@ -1363,6 +1998,20 @@ show_message:
         ld a,(hl)
         or a    ; Nothing to show?
         ret z   ; No, return.
+    if MSX
+        call is_it_msx2
+        jr nc,.5
+        call convert_menu2
+.6:
+        ld a,(hl)
+        inc hl
+        or a
+        ret z
+        call draw_letter2
+        jr .6
+        
+    endif
+.5:
         ex af,af'
 
         push af
@@ -1414,12 +2063,6 @@ show_message:
         pop hl
         ret
 
-patch_x:
-        ld hl,.1
-        ret
-
-.1:     db $00,$00,$88,$50,$20,$50,$88,$00
-
 draw_letter:
         push hl
         sub $20
@@ -1431,9 +2074,6 @@ draw_letter:
         add hl,hl
         ld bc,font_bitmaps
         add hl,bc
-
-        cp $58          ; Patch the X
-        call z,patch_x
 
         pop bc
         call draw_letter_generic
@@ -1669,6 +2309,12 @@ vdp_mode_2:
 	djnz .1
         call nmi_on
 
+    if MSX
+        call is_it_msx2
+        ld hl,msx2_default_palette
+        call c,set_palette
+    endif
+
         call clear_sprites
 
 	ld hl,$3f00
@@ -1700,12 +2346,215 @@ DISSCR:
 	call WRTVDP
 	jp nmi_on
 
+	;
+	; Set video display mode 2
+        ; (when all the screen will be set)
+	;
+fast_vdp_mode_2:
+	call nmi_off
+
+        xor a
+        ld (mode),a
+
+	ld hl,mode_2_table
+	ld bc,$0800
+.1:	push bc
+	ld b,(hl)
+	call WRTVDP
+	pop bc
+	inc c
+	inc hl
+	djnz .1
+    if MSX
+        call is_it_msx2
+        jp nc,.0
+        ld a,(RG9SAV)
+        res 7,a
+        ld (RG9SAV),a
+        ld b,a
+        ld c,9          ; 192-line mode.
+        call WRTVDP
+        ld a,(RG11SAV)
+        and $fc
+        ld (RG11SAV),a
+        ld b,a
+        ld c,11         ; High-byte of sprite attributes address.
+        call WRTVDP
+        ld bc,$000e     ; Go to low bank of VRAM.
+        call WRTVDP
+.0:
+    endif
+        call nmi_on
+
+    if MSX
+        call is_it_msx2
+        ld hl,msx2_default_palette
+        call c,set_palette
+    endif
+
+        call clear_sprites
+
+	ld hl,$3f00
+.2:	call nmi_off
+	ld bc,$0080
+	xor a
+	call FILVRM
+	call nmi_on
+	ld bc,$ff80
+        add hl,bc
+        ld a,h
+        cp $37
+        jr nz,.2
+
+        ld hl,$1f80
+.3:     call nmi_off
+	ld bc,$0080
+	xor a
+	call FILVRM
+	call nmi_on
+	ld bc,$ff80
+        add hl,bc
+        ld a,h
+        cp $17
+        jr nz,.3
+        ret
+
+    if MSX
+        ;
+        ; Mode 4 table (high-resolution)
+        ;
+mode_4_table:
+        DB $06          ; Register 0 - Mode 4
+        DB $A2          ; Register 1 - Mode 4, turn off video, sprites 16x16
+        DB $1f          ; Register 2 - Screen patterns at $0000
+        DB $ff          ; Register 3 - Unused
+        DB $03          ; Register 4 - Unused
+        DB $ff          ; Register 5 - Sprites attributes $fc00
+        DB $1e          ; Register 6 - Sprites bitmaps $f000
+        DB $01          ; Register 7 - Black border
+
+	;
+        ; Set video display mode 4
+	;
+vdp_mode_4:
+	call nmi_off
+
+        xor a
+        ld (mode),a
+
+        ld hl,mode_4_table
+	ld bc,$0800
+.1:	push bc
+	ld b,(hl)
+	call WRTVDP
+	pop bc
+	inc c
+	inc hl
+	djnz .1
+
+        ld a,(RG9SAV)
+        set 7,a
+        ld (RG9SAV),a
+        ld b,a
+        ld c,9          ; 212-line mode.
+        call WRTVDP
+        ld a,(RG11SAV)
+        and $fc
+        or $01
+        ld (RG11SAV),a
+        ld b,a
+        ld c,11         ; High-byte of sprite attributes address.
+        call WRTVDP
+        call nmi_on
+
+        call clear_sprites2
+
+        ld hl,$0000
+.2:	call nmi_off
+	ld bc,$0080
+	xor a
+        call FILVRM2
+	call nmi_on
+        ld bc,$0080
+	add hl,bc
+        ld a,h
+        cp $6a
+        jp nz,.2
+
+        ld hl,$ff00
+.3:     call nmi_off
+        ld bc,$0080
+	xor a
+        call FILVRM2
+	call nmi_on
+        ld bc,$ff80
+	add hl,bc
+        ld a,h
+        cp $ef
+        jp nz,.3
+
+        jp ENASCR
+
+	;
+        ; Set video display mode 4
+        ; (when all the screen will be set)
+	;
+fast_vdp_mode_4:
+	call nmi_off
+
+        xor a
+        ld (mode),a
+
+        ld hl,mode_4_table
+	ld bc,$0800
+.1:	push bc
+	ld b,(hl)
+	call WRTVDP
+	pop bc
+	inc c
+	inc hl
+	djnz .1
+
+        ld a,(RG9SAV)
+        set 7,a
+        ld (RG9SAV),a
+        ld b,a
+        ld c,9          ; 212-line mode.
+        call WRTVDP
+        ld a,(RG11SAV)
+        and $fc
+        or $01
+        ld (RG11SAV),a
+        ld b,a
+        ld c,11         ; High-byte of sprite attributes address.
+        call WRTVDP
+        call nmi_on
+
+        call clear_sprites2
+
+        ld hl,$ff00
+.3:     call nmi_off
+        ld bc,$0080
+	xor a
+        call FILVRM2
+	call nmi_on
+        ld bc,$ff80
+	add hl,bc
+        ld a,h
+        cp $ef
+        jp nz,.3
+        ret
+
+title_msx2:
+        incbin "titlem2.bin"
+    endif
+
 clear_sprites:
         call nmi_off
-	ld hl,$3f80
+        ld hl,$3f80
 	ld a,$d1
 	ld bc,$0080
-	call FILVRM
+        call FILVRM
         jp nmi_on
 
         ;
@@ -1725,7 +2574,7 @@ unpack:
         add a,a
         rl e
         rl e
-        ld hl,modes
+        ld hl,.modes
         add hl,de
         ld c,(hl)
         inc hl
@@ -1734,10 +2583,10 @@ unpack:
         pop ix
         ld e,1
 	exx
-        ld iy,loop
+        ld iy,.loop
 
 ; Main depack loop
-literal:
+.literal:
         ex af,af'
         call nmi_off
         ld a,(hl)
@@ -1748,62 +2597,62 @@ literal:
         inc de
         call nmi_on
         ex af,af'
-loop:   add a,a
-        call z,getbit
-        jr nc,literal
+.loop:   add a,a
+        call z,.getbit
+        jr nc,.literal
 
 ; Compressed data
 	exx
         ld h,d
         ld l,e
-getlen: add a,a
-        call z,getbitexx
-        jr nc,lenok
-lus:    add a,a
-        call z,getbitexx
+.getlen: add a,a
+        call z,.getbitexx
+        jr nc,.lenok
+.lus:    add a,a
+        call z,.getbitexx
         adc hl,hl
         ret c   
         add a,a
-        call z,getbitexx
-        jr nc,lenok
+        call z,.getbitexx
+        jr nc,.lenok
         add a,a
-        call z,getbitexx
+        call z,.getbitexx
         adc hl,hl
         ret c  
         add a,a
-        call z,getbitexx
-        jr c,lus
-lenok:  inc hl
+        call z,.getbitexx
+        jr c,.lus
+.lenok:  inc hl
 	exx
         ld c,(hl)
         inc hl
         ld b,0
         bit 7,c
-        jr z,offsok
+        jr z,.offsok
         jp (ix)
 
-mode6:  add a,a
-        call z,getbit
+.mode6:  add a,a
+        call z,.getbit
         rl b
-mode5:  add a,a
-        call z,getbit
+.mode5:  add a,a
+        call z,.getbit
         rl b
-mode4:  add a,a
-        call z,getbit
+.mode4:  add a,a
+        call z,.getbit
         rl b
-mode3:  add a,a
-        call z,getbit
+.mode3:  add a,a
+        call z,.getbit
         rl b
-mode2:  add a,a
-        call z,getbit
+.mode2:  add a,a
+        call z,.getbit
         rl b
         add a,a
-        call z,getbit
-        jr nc,offsok
+        call z,.getbit
+        jr nc,.offsok
         or a
         inc b
         res 7,c
-offsok: inc bc
+.offsok: inc bc
         push hl
 	exx
         push hl
@@ -1813,7 +2662,7 @@ offsok: inc bc
         sbc hl,bc
         pop bc
         ex af,af'
-loop2:  call nmi_off
+.loop2:  call nmi_off
         call RDVRM              ; unpack
         ex de,hl
         call WRTVRM
@@ -1824,17 +2673,17 @@ loop2:  call nmi_off
         dec bc          ; 6
         ld a,b          ; 4
         or c            ; 4
-        jr nz,loop2     ; 10
+        jr nz,.loop2     ; 10
         ex af,af'
         pop hl
         jp (iy)
 
-getbit: ld a,(hl)
+.getbit: ld a,(hl)
         inc hl
 	rla
 	ret
 
-getbitexx:
+.getbitexx:
 	exx
         ld a,(hl)
         inc hl
@@ -1842,13 +2691,13 @@ getbitexx:
 	rla
 	ret
 
-modes:
-	dw	offsok
-	dw	mode2
-	dw	mode3
-	dw	mode4
-	dw	mode5
-        dw      mode6
+.modes:
+        dw      .offsok
+        dw      .mode2
+        dw      .mode3
+        dw      .mode4
+        dw      .mode5
+        dw      .mode6
 
         ; 0- Bitmaps.
         ; 1- Colors.
@@ -2010,6 +2859,44 @@ font_bitmaps:
 rom_end:
 
         ds COLECO*$10000+MSX*$c000+SG1000*$8000-$,$ff
+
+    if MSX
+        forg $8000      ; Bank 2
+        org $8000
+
+donnam2:
+        incbin "donnam2.bin"
+monoscopem2:
+        incbin "monoscopem2.bin"
+bank2_end:
+        ds $4000,$ff
+
+        forg $c000      ; Bank 3
+        org $8000
+
+        ds $4000,$ff
+
+        forg $10000     ; Bank 4
+        org $8000
+
+        ds $4000,$ff
+
+        forg $14000     ; Bank 5
+        org $8000
+
+        ds $4000,$ff
+
+        forg $18000     ; Bank 6
+        org $8000
+
+        ds $4000,$ff
+
+        forg $1c000     ; Bank 7
+        org $8000
+
+        ds $4000,$ff
+
+    endif
 
         org ram_base
 frame:  rb 2            ; Frame counter.

@@ -22,3 +22,13 @@ tmscolor -c1 -m monoscope.bmp monoscope.dat
 pletter monoscope.dat 0 6144 monoscope0.bin
 pletter monoscope.dat 6144 6144 monoscope1.bin
 tmscolor -c1 controller.bmp controller.dat
+tmscolor -v -c1 title2.bmp titlem2.dat
+pletter titlem2.dat titlem2.bin
+del titlem2.dat
+tmscolor -v -c1 donna2.bmp donnam2.dat
+pletter donnam2.dat donnam2.bin
+del donnam2.dat
+tmscolor -v -c1 monoscope2.bmp monoscopem2.dat
+pletter monoscopem2.dat monoscopem2.bin
+del monoscopem2.dat
+

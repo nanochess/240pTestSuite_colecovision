@@ -2,7 +2,7 @@
 
 ### Original program by Artemio Urbina. Colecovision/MSX/SG1000 version by Oscar Toledo G.
 
-### Last revision: Jan/03/2024.
+### Last revision: Jan/17/2024.
 
 Choose items from the menu by moving the stick up and down using any controller.
 
@@ -14,7 +14,7 @@ Tested in real hardware.
 
 ### Notes for MSX:
 
-Not yet tested in real hardware.
+Tested in real hardware. MSX 2 has some better graphics.
 
 Left-side button is space or button 1. Right-side button is M or button 2.
 

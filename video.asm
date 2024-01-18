@@ -79,6 +79,34 @@ video_menu:
         ;
 drop_shadow:
         call DISSCR
+    if MSX
+        call is_it_msx2
+        jp nc,.0
+        call clear_sprites2
+        ld a,2
+        ld ($7000),a
+        ld hl,msx2_donna_palette
+        call set_palette
+        ld hl,donnam2
+        ld de,$0000
+        call unpack2
+        ld a,1
+        ld ($7000),a
+        ld hl,striped
+        ld de,$f100
+        ld bc,$0100
+        call nmi_off
+        call LDIRVM2
+        call nmi_on
+        ld hl,MSX2_SPRITE_SAT-$0200
+        ld bc,$0040
+        ld a,$01        ; MSX2 sprite color for each line.
+        call nmi_off
+        call FILVRM2
+        call nmi_on
+        jp .11
+.0:        
+    endif
         call clear_sprites
         call highres
         ld hl,donna0
@@ -102,6 +130,7 @@ drop_shadow:
         call nmi_off
         call LDIRVM
         call nmi_on
+.11:
         call ENASCR
         xor a
         ld (cframe),a
@@ -144,7 +173,14 @@ drop_shadow:
         ld (buffer+13),a
         jr .3
 .2:
+    if MSX
+        call is_it_msx2
         ld a,$d1
+        jr nc,$+4
+        ld a,$d8
+    else
+        ld a,$d1
+    endif
         ld (buffer),a
         ld (buffer+4),a
         ld (buffer+8),a
@@ -153,10 +189,18 @@ drop_shadow:
 
         halt
         ld hl,buffer
-        ld de,$3f80
         ld bc,$0010
+    if MSX
+        call is_it_msx2
+        jp nc,.10
+        ld de,MSX2_SPRITE_SAT
+        call LDIRVM2
+        jr .12
+.10:
+    endif
+        ld de,$3f80
         call LDIRVM
-
+.12:
         ld a,(cframe)
         xor 1
         ld (cframe),a
@@ -185,8 +229,16 @@ drop_shadow:
         bit 2,a
         jr nz,.6
         push af
+    if MSX
+        call is_it_msx2
+        ld b,$a0
+        jr nc,$+4
+        ld b,$b4
+    else
+        ld b,$a0
+    endif
         ld a,(y)
-        cp $a0
+        cp b
         jr z,$+3
         inc a
         ld (y),a
@@ -245,6 +297,34 @@ drop_shadow:
         ;
 striped_sprite:
         call DISSCR
+    if MSX
+        call is_it_msx2
+        jp nc,.0
+        call clear_sprites2
+        ld a,2
+        ld ($7000),a
+        ld hl,msx2_donna_palette
+        call set_palette
+        ld hl,donnam2
+        ld de,$0000
+        call unpack2
+        ld a,1
+        ld ($7000),a
+        ld hl,striped
+        ld de,$f100
+        ld bc,$0100
+        call nmi_off
+        call LDIRVM2
+        call nmi_on
+        ld hl,MSX2_SPRITE_SAT-$0200
+        ld bc,$0040
+        ld a,$01        ; MSX2 sprite color for each line.
+        call nmi_off
+        call FILVRM2
+        call nmi_on
+        jp .11
+.0:        
+    endif
         call clear_sprites
         call highres
         ld hl,donna0
@@ -268,6 +348,7 @@ striped_sprite:
         call nmi_off
         call LDIRVM
         call nmi_on
+.11:
         call ENASCR
         ld a,$70
         ld (x),a
@@ -303,9 +384,18 @@ striped_sprite:
 
         halt
         ld hl,buffer
-        ld de,$3f80
         ld bc,$0010
+    if MSX
+        call is_it_msx2
+        jp nc,.10
+        ld de,MSX2_SPRITE_SAT
+        call LDIRVM2
+        jr .12
+.10:
+    endif
+        ld de,$3f80
         call LDIRVM
+.12:
 
         call read_joystick_button_debounce
         bit 0,a
@@ -331,8 +421,16 @@ striped_sprite:
         bit 2,a
         jr nz,.6
         push af
+    if MSX
+        call is_it_msx2
+        ld b,$a0
+        jr nc,$+4
+        ld b,$b4
+    else
+        ld b,$a0
+    endif
         ld a,(y)
-        cp $a0
+        cp b
         jr z,$+3
         inc a
         ld (y),a
@@ -361,7 +459,11 @@ striped_sprite:
         ; Grid Scroll test
         ;
 grid_scroll:
+    if MSX
+        call fast_vdp_mode_2
+    else
         call DISSCR
+    endif
         call clear_sprites
         call load_letters
         call nmi_off
@@ -538,6 +640,10 @@ grid_scroll:
         jp z,.1
         ld a,15
         ld (debounce),a
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_4
+    endif
         call reload_menu
         jp video_menu
 
@@ -578,7 +684,11 @@ grid_scroll:
         db $87
 
 checkerboard:
+    if MSX
+        call fast_vdp_mode_2
+    else
         call DISSCR
+    endif
         call clear_sprites
         call load_letters
         call nmi_off
@@ -751,6 +861,10 @@ checkerboard:
         jp z,.1
         ld a,15
         ld (debounce),a
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_4
+    endif
         call reload_menu
         jp video_menu
 
@@ -765,7 +879,11 @@ LAG_BK_COLOR:   EQU $0f
         ; Lag Test.
         ;
 lag_test:
+    if MSX
+        call fast_vdp_mode_2
+    else
         call DISSCR
+    endif
         call clear_sprites
         ld bc,LAG_BK_COLOR*256+$07
         call nmi_off
@@ -817,7 +935,7 @@ lag_test:
         ld hl,.lag_message
         ld de,$0000
         ld a,$10+LAG_BK_COLOR
-        call show_message
+        call show_message_vdp2
         ld hl,digits
         ld de,$005b*8
         ld bc,165*8
@@ -1119,6 +1237,10 @@ lag_test:
 
         ld a,15
         ld (debounce),a
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_4
+    endif
         call reload_menu
         jp video_menu
 
@@ -1413,7 +1535,11 @@ T_CENTER_Y:     EQU 80
         ; Timing and Reflex Test.
         ;
 timing_reflex_test:
+    if MSX
+        call fast_vdp_mode_2
+    else
         call DISSCR
+    endif
 
         call clear_sprites
         call highres
@@ -1451,19 +1577,19 @@ timing_reflex_test:
         ld hl,.message_1
         ld de,$1400
         ld a,$21
-        call show_message
+        call show_message_vdp2
         ld hl,.message_2
         ld de,$1500
         ld a,$21
-        call show_message
+        call show_message_vdp2
         ld hl,.message_3
         ld de,$1600
         ld a,$21
-        call show_message
+        call show_message_vdp2
         ld hl,.message_4
         ld de,$1700
         ld a,$21
-        call show_message
+        call show_message_vdp2
 
         call ENASCR
 
@@ -1702,7 +1828,7 @@ timing_reflex_test:
 
         ld hl,buffer+42
         ld a,$21
-        call show_message
+        call show_message_vdp2
 
         ld a,(pos)
         inc a
@@ -1819,6 +1945,10 @@ timing_reflex_test:
 
         ld a,15
         ld (debounce),a
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_4
+    endif
         call reload_menu
 
         ld a,(pos)
@@ -2100,7 +2230,11 @@ timing_reflex_test:
         ; Draw Stripes.
         ;
 draw_stripes:
+    if MSX
+        call fast_vdp_mode_2
+    else
         call DISSCR
+    endif
         call clear_sprites
         call load_letters
         call nmi_off
@@ -2273,6 +2407,10 @@ draw_stripes:
         jp z,.1
         ld a,15
         ld (debounce),a
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_4
+    endif
         call reload_menu
         jp video_menu
 
@@ -2285,7 +2423,11 @@ draw_stripes:
         ; Backlit Zone Test
         ;
 backlit_zone_test:
+    if MSX
+        call fast_vdp_mode_2
+    else
         call DISSCR
+    endif
         call clear_sprites
         call highres
         ld hl,.void
@@ -2464,6 +2606,10 @@ backlit_zone_test:
         ld a,15
         ld (debounce),a
 
+    if MSX
+        call is_it_msx2
+        call c,fast_vdp_mode_4
+    endif
         call reload_menu
         jp video_menu
 
