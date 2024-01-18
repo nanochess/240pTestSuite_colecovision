@@ -30,8 +30,8 @@
         ;
             
 COLECO: equ 0   ; Define this to 1 for Colecovision
-MSX:    equ 1   ; Define this to 1 for MSX
-SG1000: equ 0   ; Define this to 1 for SG1000
+MSX:    equ 0   ; Define this to 1 for MSX
+SG1000: equ 1   ; Define this to 1 for SG1000
 
 BASE_MENU:      equ $0820
 
@@ -381,8 +381,7 @@ LDIRVM2:
         LD B,C
         INC A
         LD C,VDP
-.1:     OUTI
-        JP NZ,.1
+.1:     OTIR
         DEC A
         JP NZ,.1
         RET
