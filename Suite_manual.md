@@ -2,7 +2,7 @@
 
 ### Original program by Artemio Urbina. Colecovision/MSX/SG1000 version by Oscar Toledo G.
 
-### Last revision: Jan/17/2024.
+### Last revision: Jan/18/2024.
 
 Choose items from the menu by moving the stick up and down using any controller.
 
@@ -35,6 +35,10 @@ On more recent models you can use the two buttons of the second controller as ke
 Since the software is running on a gaming platform, there is some degree of interactivity not possible on regular video tests, we have tried to use this as best as possible when applicable. For the rest of the cases regular test patterns, with inspiration in other sources, have been used.
 
 Here's a description of each one of the options, as well as any specific commands within them.
+
+### Test Patterns > SMPTE Color Bars.
+
+Currently this test is an afterthought and it could be removed as the color levels hadn't been measured.
 
 ### Test Patterns > Color Bleed Check.
 
@@ -189,6 +193,8 @@ Press both side buttons on any controller to exit test.
 Shows BIOS checksum (CRC32 for Colecovision, SHA1 for MSX BIOS on first 32K)
 
 It can take a few seconds to show the hash. In MSX emulation the test isn't useful as the emulators tend to patch the MSX BIOS.
+
+The MSX version includes the MAME and BlueMSX System BIOS databases.
 
 Not implemented in SG1000 as it doesn't has a BIOS.
 

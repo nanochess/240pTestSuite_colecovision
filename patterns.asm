@@ -46,12 +46,46 @@ menu_patterns:
         db "*Back to Main Menu",0
         dw $0000
 
+    if MSX
+menu_patterns2:
+        dw $0820
+        db "*SMPTE Color Bars",0
+        dw $0920
+        db "*Color Bleed Check",0
+        dw $0a20
+        db "*Monoscope",0
+        dw $0b20
+        db "*Grid",0
+        dw $0c20
+        db "*White & Black Screens",0
+        dw $0d20
+        db "*Sharpness",0
+        dw $0e20
+        db "*VDP Color Bars",0
+        dw $1020
+        db "*Back to Main Menu",0
+        dw $0000
+    endif
+
 patterns_menu:
         call clean_menu
+    if MSX
+        call is_it_msx2
+        jr nc,.0
+        ld hl,menu_patterns2
+        call build_menu
+        or a
+        jp z,patterns_smpte
+        dec a
+        jr .1
+.0:
+    endif
+
         ld hl,menu_patterns
         call build_menu
 
         or a
+.1:
         jp z,patterns_color_bleed
 ;        dec a
 ;        jp z,patterns_circles
@@ -67,6 +101,34 @@ patterns_menu:
         jp z,patterns_vdp_color_bars
         
         jp main_menu
+
+    if MSX
+patterns_smpte:
+        call DISSCR
+        call clear_sprites2
+        ld a,2
+        ld ($7000),a
+        ld hl,msx2_smpte_palette
+        call set_palette
+        ld hl,smptem2
+        ld de,$0000
+        call unpack2
+        ld a,1
+        ld ($7000),a
+        call ENASCR
+.1:
+        halt
+        call read_joystick_button_debounce
+        cpl
+        and $e0
+        jr z,.1
+        ld a,15
+        ld (debounce),a
+
+        call fast_vdp_mode_4
+        call reload_menu
+        jp patterns_menu
+    endif
 
 patterns_color_bleed:
     if MSX
@@ -681,11 +743,6 @@ patterns_sharpness:
         call reload_menu
         jp patterns_menu
 
-sharpness0:
-        incbin "sharpness0.bin"
-sharpness1:
-        incbin "sharpness1.bin"
-
 patterns_vdp_color_bars:
     if MSX
         call fast_vdp_mode_2
@@ -795,20 +852,4 @@ patterns_vdp_color_bars:
     endif
         call reload_menu
         jp patterns_menu
-
-circles_bin:
-        incbin "circles0.bin"
-
-bars0_dat:
-        incbin "bars1.dat",$0400,$0080
-bars1_dat:
-        incbin "bars1.dat",$0c00,$0080
-bars2_dat:
-        incbin "bars1.dat",$1000,$0300
-bars3_dat:
-        incbin "bars2.dat",$0600,$00c0
-bars4_dat:
-        incbin "bars2.dat",$0e00,$00c0
-bars5_dat:
-        incbin "bars2.dat",$1000,$0300
 

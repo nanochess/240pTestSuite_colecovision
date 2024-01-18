@@ -383,31 +383,7 @@ bios_test:
     endif
         ; Not enabled, as databases are based on a SHA1 hash.
     if MSX
-        ld a,$c9
-	ld ($fd9a),a
-        ld a,(bios_rom)
-        ld h,$40
-        call ENASLT     ; Map into $4000-$7FFF
-        call sha1_init
-        ld hl,$0000
-        ld bc,$8000
-
-;        ld hl,$4000    ; @@@ self-SHA1 of cartridge.
-;        ld bc,$8000    ; @@@
-
-;        ld hl,sha1_test ; @@@
-;        ld bc,43        ; @@@
-
-;        ld hl,sha1_test2 ; @@@
-;        ld bc,896/8       ; @@@
-
-        call sha1_calculate
-        call sha1_final
-        ld a,(cartridge_rom)
-        ld h,$40
-        call ENASLT     ; Map into $4000-$7FFF
-        ld a,$c3
-	ld ($fd9a),a
+        call msx_sha1
         ld iy,sha1_h0
         ld ix,buffer
         ld a,(iy+0)
@@ -511,8 +487,110 @@ bios_test:
     endif
 
     if MSX
-        ld ix,msx_data
-        ld c,3          ; Number of signatures.
+        ex af,af'
+        ld a,6
+        ld ($7000),a
+        ex af,af'
+        ld hl,$8000             ; MAME_START_DATABASE
+        ld bc,MAME_ENTRIES
+.8:     push bc
+        ld de,sha1_h0
+        ld b,20
+.10:    ld a,(de)
+        cp (hl)
+        jp nz,.9
+        inc de
+        inc hl
+        bit 6,h
+        jr z,$+10
+        res 6,h
+        ex af,af'
+        inc a
+        ld ($7000),a
+        ex af,af'
+        djnz .10
+        pop bc
+        jr .14
+
+.9:     ld c,b
+        ld b,0
+        add hl,bc
+        bit 6,h
+        jr z,$+10
+        res 6,h
+        ex af,af'
+        inc a
+        ld ($7000),a
+        ex af,af'
+.12:
+        ld a,(hl)
+        inc hl
+        or a
+        jr z,.11
+        bit 6,h
+        jr z,$+10
+        res 6,h
+        ex af,af'
+        inc a
+        ld ($7000),a
+        ex af,af'
+        jr .12
+.11:
+        pop bc
+        dec bc
+        ld a,b
+        or c
+        jp nz,.8
+        ld bc,20
+        add hl,bc
+        bit 6,h
+        jr z,$+10
+        res 6,h
+        ex af,af'
+        inc a
+        ld ($7000),a
+        ex af,af'
+.14:
+        ld de,buffer
+.16:
+        ld a,(hl)
+        or a
+        jr z,.15
+        ld (de),a
+        inc de
+        inc hl
+        bit 6,h
+        jr z,$+10
+        res 6,h
+        ex af,af'
+        inc a
+        ld ($7000),a
+        ex af,af'
+        jr .16
+.15:
+        xor a
+        ld (de),a
+        ld a,1
+        ld ($7000),a
+
+        ld hl,buffer
+        ld b,24
+        ld a,(hl)
+        or a
+        jr z,$+7
+        inc hl
+        djnz $-5
+        ld (hl),0
+
+        ld hl,buffer
+        ld de,$1520
+        ld a,$1e
+        call show_message
+
+        ld a,$05
+        ld ($7000),a
+        ld ix,blue_start_database
+        ld c,BLUE_ENTRIES         ; Number of signatures.
 .4:
         ld hl,sha1_h0
         push ix
@@ -543,6 +621,8 @@ bios_test:
         ld de,$0c20
         ld a,$1e
         call show_message_multiline
+        ld a,$01
+        ld ($7000),a
     endif
 .2:     halt
         call read_joystick_button_debounce

@@ -5,10 +5,14 @@
 Your options to use the suite.rom file are:
 
 * Your favorite Colecovision/MSX/SG1000 emulator (BlueMSX, OpenMSX or CoolCV).
-* Load the file into a flash cartridge like the AtariMAX Ultimate SD Colecovision cartridge.
+* Load the file into a flash cartridge like the AtariMAX Ultimate SD Colecovision cartridge or the MSX MegaFlash SD cartridge.
 * Program the file into an EPROM and put it into a cartridge PCB for Colecovision/MSX/SG1000.
 
 Detailed usage instructions are in the Suite_manual.md file.
+
+If you MSX MegaFlashSD cartridge has trouble recognizing the mapping (ASCII16), run the following command line:
+
+    A:OPFXSD B:SUITEMSX.ROM /A16
 
 ### How to assemble
 

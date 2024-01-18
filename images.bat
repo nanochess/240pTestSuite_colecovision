@@ -31,4 +31,7 @@ del donnam2.dat
 tmscolor -v -c1 monoscope2.bmp monoscopem2.dat
 pletter monoscopem2.dat monoscopem2.bin
 del monoscopem2.dat
+tmscolor -v -c1 smpte.bmp smptem2.dat
+pletter smptem2.dat smptem2.bin
+del smptem2.dat
 
