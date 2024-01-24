@@ -30,8 +30,8 @@
         ;
             
 COLECO: equ 0   ; Define this to 1 for Colecovision
-MSX:    equ 0   ; Define this to 1 for MSX
-SG1000: equ 1   ; Define this to 1 for SG1000
+MSX:    equ 1   ; Define this to 1 for MSX
+SG1000: equ 0   ; Define this to 1 for SG1000
 
 BASE_MENU:      equ $0820
 
@@ -152,6 +152,8 @@ SNSMAT: EQU $0141       ; Read keyboard matrix (row in A, output in A)
 
         ;
         ; Get slot mapping
+        ; B = 16K bank (0 for $0000, 1 for $4000, 2 for $8000, 3 for $c000)
+        ; A = Current slot selection status (CALL RSLREG)
         ;
 get_slot_mapping:
         call rotate_slot
@@ -686,6 +688,8 @@ unpack2:
         dw      .mode5
         dw      .mode6
 
+        include "scc.asm"
+
     endif
 
         db "Powered by @nanochess :) Coding started Dec/20/2023",0
@@ -1124,15 +1128,17 @@ START:
 
     endif
     if MSX
-        ld a,1
-        ld ($7000),a    ; Secondary bank at $8000-$bfff.
+        di
+        xor a
+        ld ($5000),a
+        inc a
+        ld ($7000),a
+        inc a
+        ld ($9000),a
+        inc a
+        ld ($b000),a
 
 	ld sp,stack
-	; Sound guaranteed to be off
-        ld hl,nmi_handler
-	ld ($fd9b),hl
-	ld a,$c3
-	ld ($fd9a),a
         ;
         ; Clear memory
         ;
@@ -1159,7 +1165,21 @@ START:
         ld (cartridge_rom),a
         ld h,$80
         call ENASLT     ; Map into $8000-$BFFF
+        call detect_fm
+        ld a,(fm_enabled)
+        or a
+        call nz,init_fm
 
+        call detect_scc
+        ld a,(scc_enabled)
+        or a
+        call nz,init_scc
+
+	; Sound guaranteed to be off
+        ld hl,nmi_handler
+	ld ($fd9b),hl
+	ld a,$c3
+	ld ($fd9a),a
     endif
     if SG1000
         ld sp,STACK
@@ -1269,16 +1289,207 @@ main_menu:
 
 audio_menu:
         call clean_menu
+    if MSX
+        ld a,(fm_enabled)
+        or a
+        jr z,.0
+        ld de,$1220
+        ld hl,audio_0
+        ld a,$4e
+        call show_message
+.0:
+        ld a,(scc_enabled)
+        or a
+        jr z,.4
+        ld de,$1320
+        ld hl,audio_4
+        ld a,$4e
+        call show_message
+.4:
+
+        ld hl,mdfourier_menu_flags
+        set 0,(hl)
+
+        ld a,(fm_enabled)
+        or a
+        jr z,$+4
+        set 1,(hl)
+
+        ld a,(scc_enabled)
+        or a
+        jr z,$+4
+        set 2,(hl)
+
+        ld a,(hl)
+        cp 1
+        ld hl,menu_audio_1
+        ld de,menu_audio_1_jp
+        ld b,4
+        jr z,.1
+        cp 3
+        ld hl,menu_audio_3
+        ld de,menu_audio_3_jp
+        ld b,5
+        jr z,.1
+        cp 5
+        ld hl,menu_audio_5
+        ld de,menu_audio_5_jp
+        ld b,5
+        jr z,.1
+        ld hl,menu_audio_7
+        ld de,menu_audio_7_jp
+        ld b,7
+.1:
+        push bc
+        push de
+        call build_menu
+        pop de
+        pop bc
+        cp b
+        jr c,$+4
+        ld a,b
+        dec a
+
+        add a,a
+        ld l,a
+        ld h,0
+        add hl,de
+        ld a,(hl)
+        inc hl
+        ld h,(hl)
+        ld l,a
+        jp (hl)
+    endif
+    if COLECO+SG1000
         ld hl,menu_audio
         call build_menu
-
         or a
         jp z,audio_test
         dec a
         jp z,audio_sync_test
-
+        dec a
+        jp z,audio_mdfourier
+   
         jp main_menu
+    endif
 
+        ;
+        ; Audio MDFourier
+        ;
+    if MSX
+audio_mdfourier_7:
+        ld a,7
+        ld (mdfourier_test_flags),a
+        jp audio_mdfourier
+
+audio_mdfourier_5:
+        ld a,5
+        ld (mdfourier_test_flags),a
+        jp audio_mdfourier
+
+audio_mdfourier_3:
+        ld a,3
+        ld (mdfourier_test_flags),a
+        jp audio_mdfourier
+
+audio_mdfourier_1:
+        ld a,1
+        ld (mdfourier_test_flags),a
+    endif
+
+audio_mdfourier:
+        call clean_menu
+
+    if MSX
+        ld a,(mdfourier_test_flags)
+        ld hl,mdfourier_test_1
+        cp 1
+        jr z,.0
+        ld hl,mdfourier_test_3
+        cp 3
+        jr z,.0
+        ld hl,mdfourier_test_5
+        cp 5
+        jr z,.0
+        ld hl,mdfourier_test_7
+.0:
+    endif
+    if COLECO+SG1000
+        ld hl,mdfourier_test_0
+    endif
+        ld de,$0a20
+        ld a,$de
+        call show_message
+        ld de,$0c20
+        ld hl,audio_1
+        ld a,$1e
+        call show_message_multiline
+
+.1:
+        halt
+        call read_joystick_button_debounce
+        cpl
+        bit 5,a
+        jp nz,.4
+        and $c0
+        jr z,.1
+        ld a,15
+        ld (debounce),a
+
+        ld de,$0f20
+        ld hl,audio_5
+        ld a,$1e
+        call show_message
+
+        call mdfourier
+
+        call clean_menu
+        ld de,$0c20
+        ld hl,audio_3
+        ld a,$1e
+        call show_message
+
+.2:
+        halt
+        call read_joystick_button_debounce
+        cpl
+        and $e0
+        jr z,.2
+        bit 5,a
+        jp nz,.4
+
+.3:     ld a,15
+        ld (debounce),a
+        jp audio_mdfourier
+
+.4:     ld a,15
+        ld (debounce),a
+        jp audio_menu
+
+    if MSX
+audio_0:
+        db "FM detected.",0
+audio_4:
+        db "SCC detected.",0
+    endif
+
+audio_1:
+        db "Start recording then,"
+    if COLECO
+        db "press side-button.",0
+    endif
+    if MSX
+        db "press button.",0
+    endif
+    if SG1000
+        db "press button.",0
+    endif
+audio_5:
+        db "Running tests...",0
+audio_3:
+        db "MDFourier complete.",0
+
+        ;
         ;
         ; Audio test, approximately 1000 hz.
         ;
@@ -1566,7 +1777,7 @@ credits_text:
         dw $1420
         db $de,"http://junkerhq.net/xrgb",0
         dw $1520
-        db $ce,"Build date: Jan/18/2024",0
+        db $ce,"Build date: Jan/23/2024",0
         dw $0000
 
 reload_menu:
@@ -1581,9 +1792,17 @@ reload_menu:
         call is_it_msx2
         jp nc,.1
         call clear_sprites2
+        ld a,4
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         ld hl,title_msx2
         ld de,$0000
         call unpack2
+        ld a,2
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         ld hl,msx2_title_palette
         call set_palette
         jp ENASCR
@@ -1948,14 +2167,113 @@ menu_main:
         db "*Credits",0
         dw $0000
 
+    if COLECO+SG1000
 menu_audio:
         dw $0820
         db "*Sound Test",0
         dw $0920
         db "*Audio Sync Test",0
-        dw $0b20
+        dw $0a20
+        db "*"
+mdfourier_test_0:
+        db "MDFourier",0
+        dw $0c20
         db "*Back to Main Menu",0
         dw $0000
+    endif
+
+    if MSX
+menu_audio_1:
+        dw $0820
+        db "*Sound Test",0
+        dw $0920
+        db "*Audio Sync Test",0
+        dw $0a20
+        db "*MDFourier PSG",0
+        dw $0c20
+        db "*Back to Main Menu",0
+        dw $0000
+
+menu_audio_1_jp:
+        dw audio_test
+        dw audio_sync_test
+        dw audio_mdfourier_1
+        dw main_menu
+
+menu_audio_3:
+        dw $0820
+        db "*Sound Test",0
+        dw $0920
+        db "*Audio Sync Test",0
+        dw $0a20
+        db "*MDFourier PSG",0
+        dw $0b20
+        db "*MDFourier PSG+FM",0
+        dw $0d20
+        db "*Back to Main Menu",0
+        dw $0000
+
+menu_audio_3_jp:
+        dw audio_test
+        dw audio_sync_test
+        dw audio_mdfourier_1
+        dw audio_mdfourier_3
+        dw main_menu
+
+menu_audio_5:
+        dw $0820
+        db "*Sound Test",0
+        dw $0920
+        db "*Audio Sync Test",0
+        dw $0a20
+        db "*MDFourier PSG",0
+        dw $0b20
+        db "*MDFourier PSG+SCC",0
+        dw $0d20
+        db "*Back to Main Menu",0
+        dw $0000
+
+menu_audio_5_jp:
+        dw audio_test
+        dw audio_sync_test
+        dw audio_mdfourier_1
+        dw audio_mdfourier_5
+        dw main_menu
+
+menu_audio_7:
+        dw $0820
+        db "*Sound Test",0
+        dw $0920
+        db "*Audio Sync Test",0
+        dw $0a20
+        db "*"
+mdfourier_test_1:
+        db "MDFourier PSG",0
+        dw $0b20
+        db "*"
+mdfourier_test_3:
+        db "MDFourier PSG+FM",0
+        dw $0c20
+        db "*"
+mdfourier_test_5:
+        db "MDFourier PSG+SCC",0
+        dw $0d20
+        db "*"
+mdfourier_test_7:
+        db "MDFourier PSG+SCC+FM",0
+        dw $0f20
+        db "*Back to Main Menu",0
+        dw $0000
+
+menu_audio_7_jp:
+        dw audio_test
+        dw audio_sync_test
+        dw audio_mdfourier_1
+        dw audio_mdfourier_3
+        dw audio_mdfourier_5
+        dw audio_mdfourier_7
+        dw main_menu
+    endif
 
         ;
         ; HL = Pointer to multiline string (separated with comma).
@@ -2671,8 +2989,6 @@ fast_vdp_mode_4:
         jp nz,.3
         ret
 
-title_msx2:
-        incbin "titlem2.bin"
     endif
 
 clear_sprites:
@@ -2925,6 +3241,11 @@ bars4_dat:
 bars5_dat:
         incbin "bars2.dat",$1000,$0300
 
+        include "mdfourier.asm"
+
+    if MSX
+        include "fm.asm"
+    endif
 
 rom_end:
 
@@ -2934,6 +3255,8 @@ rom_end:
         forg $8000      ; Bank 2
         org $8000
 
+title_msx2:
+        incbin "titlem2.bin"
 donnam2:
         incbin "donnam2.bin"
 monoscopem2:
@@ -2975,9 +3298,18 @@ mode:   rb 1            ; Current mode.
                         ; bit 0 = 1 = NMI processing disabled.
                         ; bit 1 = 1 = NMI received during NMI disabled.
 frames_per_sec: rb 1    ; Frames per second.
-bios_rom:       rb 1    ; BIOS MSX.
 cartridge_rom:  rb 1    ; MSX.
+bios_rom:       rb 1    ; BIOS MSX.
+fm_rom:         rb 1    ; BIOS FM.
+fm_enabled:     rb 1
+scc_rom:        rb 1    ; SCC.
+scc_enabled:    rb 1
 debounce:       rb 1
+
+    if MSX
+mdfourier_menu_flags:   rb 1
+mdfourier_test_flags:   rb 1
+    endif
 
     if SG1000
 sg1000_pause:   rb 1

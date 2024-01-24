@@ -49,7 +49,7 @@ menu_patterns:
     if MSX
 menu_patterns2:
         dw $0820
-        db "*SMPTE Color Bars",0
+        db "*SMPTE Color Bars (WIP)",0
         dw $0920
         db "*Color Bleed Check",0
         dw $0a20
@@ -106,15 +106,19 @@ patterns_menu:
 patterns_smpte:
         call DISSCR
         call clear_sprites2
-        ld a,2
-        ld ($7000),a
+        ld a,4
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         ld hl,msx2_smpte_palette
         call set_palette
         ld hl,smptem2
         ld de,$0000
         call unpack2
-        ld a,1
-        ld ($7000),a
+        ld a,2
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         call ENASCR
 .1:
         halt
@@ -287,15 +291,19 @@ patterns_monoscope:
         jp nc,.0
         call DISSCR
         call clear_sprites2
-        ld a,2
-        ld ($7000),a
+        ld a,4
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         ld hl,msx2_default_palette
         call set_palette
         ld hl,monoscopem2
         ld de,$0000
         call unpack2
-        ld a,1
-        ld ($7000),a
+        ld a,2
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         call ENASCR
         ld a,7
         ld (alternate),a

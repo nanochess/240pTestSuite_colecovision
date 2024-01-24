@@ -83,15 +83,19 @@ drop_shadow:
         call is_it_msx2
         jp nc,.0
         call clear_sprites2
-        ld a,2
-        ld ($7000),a
+        ld a,4
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         ld hl,msx2_donna_palette
         call set_palette
         ld hl,donnam2
         ld de,$0000
         call unpack2
-        ld a,1
-        ld ($7000),a
+        ld a,2
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         ld hl,striped
         ld de,$f100
         ld bc,$0100
@@ -301,15 +305,19 @@ striped_sprite:
         call is_it_msx2
         jp nc,.0
         call clear_sprites2
-        ld a,2
-        ld ($7000),a
+        ld a,4
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         ld hl,msx2_donna_palette
         call set_palette
         ld hl,donnam2
         ld de,$0000
         call unpack2
-        ld a,1
-        ld ($7000),a
+        ld a,2
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         ld hl,striped
         ld de,$f100
         ld bc,$0100

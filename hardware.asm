@@ -488,8 +488,10 @@ bios_test:
 
     if MSX
         ex af,af'
-        ld a,6
-        ld ($7000),a
+        ld a,12
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         ex af,af'
         ld hl,$8000             ; MAME_START_DATABASE
         ld bc,MAME_ENTRIES
@@ -502,11 +504,13 @@ bios_test:
         inc de
         inc hl
         bit 6,h
-        jr z,$+10
+        jr z,$+14
         res 6,h
         ex af,af'
         inc a
-        ld ($7000),a
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         ex af,af'
         djnz .10
         pop bc
@@ -516,11 +520,13 @@ bios_test:
         ld b,0
         add hl,bc
         bit 6,h
-        jr z,$+10
+        jr z,$+14
         res 6,h
         ex af,af'
         inc a
-        ld ($7000),a
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         ex af,af'
 .12:
         ld a,(hl)
@@ -528,11 +534,13 @@ bios_test:
         or a
         jr z,.11
         bit 6,h
-        jr z,$+10
+        jr z,$+14
         res 6,h
         ex af,af'
         inc a
-        ld ($7000),a
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         ex af,af'
         jr .12
 .11:
@@ -544,11 +552,13 @@ bios_test:
         ld bc,20
         add hl,bc
         bit 6,h
-        jr z,$+10
+        jr z,$+14
         res 6,h
         ex af,af'
         inc a
-        ld ($7000),a
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         ex af,af'
 .14:
         ld de,buffer
@@ -560,18 +570,22 @@ bios_test:
         inc de
         inc hl
         bit 6,h
-        jr z,$+10
+        jr z,$+14
         res 6,h
         ex af,af'
         inc a
-        ld ($7000),a
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         ex af,af'
         jr .16
 .15:
         xor a
         ld (de),a
-        ld a,1
-        ld ($7000),a
+        ld a,2
+        ld ($9000),a
+        inc a
+        ld ($b000),a
 
         ld hl,buffer
         ld b,24
@@ -587,8 +601,10 @@ bios_test:
         ld a,$1e
         call show_message
 
-        ld a,$05
-        ld ($7000),a
+        ld a,10
+        ld ($9000),a
+        inc a
+        ld ($b000),a
         ld ix,blue_start_database
         ld c,BLUE_ENTRIES         ; Number of signatures.
 .4:
@@ -621,8 +637,10 @@ bios_test:
         ld de,$0c20
         ld a,$1e
         call show_message_multiline
-        ld a,$01
-        ld ($7000),a
+        ld a,$02
+        ld ($9000),a
+        inc a
+        ld ($b000),a
     endif
 .2:     halt
         call read_joystick_button_debounce
