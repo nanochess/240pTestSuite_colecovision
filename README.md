@@ -1,5 +1,13 @@
 # 240pTestSuite_colecovision
 
+### What is this?
+
+This is a port of the Artemio's 240p Test suite for Colecovision consoles, MSX 1/2/2+ computers, and Sega SG1000 consoles. It is a software suite developed to help in the evaluation of capture cards, upscalers, upscan converters, line doublers, and of course TV processiong of 240p video and scaled signals.
+
+The original 240p Test Suite is available at [https://github.com/ArtemioUrbina/240pTestSuite](https://github.com/ArtemioUrbina/240pTestSuite)
+
+More info about the 240p Test Suite is available at [https://junkerhq.net/240p/](https://junkerhq.net/240p/)
+
 ### How to use it.
 
 Your options to use the suite.rom file are:
@@ -10,9 +18,7 @@ Your options to use the suite.rom file are:
 
 Detailed usage instructions are in the Suite_manual.md file.
 
-If you MSX MegaFlashSD cartridge has trouble recognizing the mapping (ASCII16), run the following command line:
-
-    A:OPFXSD B:SUITEMSX.ROM /A16
+The mapper used for the MSX version is SCC.
 
 ### How to assemble
 
@@ -20,9 +26,9 @@ For assembling yourself the source code, you require tniASM v0.44 or v0.45 avail
 
 You only need to assemble the file suite.asm and it includes all the other required files (edit the COLECO, MSX or SG1000 label accordingly).
 
-There are some files coming from the development environment (WinXP) that create the required images (images.bat) and assemble the code (e.bat).
+There are some batch files coming from the development environment (WinXP) that create the required images (images.bat) and assemble the code (e.bat).
 
-Other utilities required are Pletter to compress the VDP data, and TMSColor to convert the bitmaps to the VDP format.
+Other utilities required are Pletter to compress the VDP data, and TMSColor to convert the bitmaps to the VDP format. Both are included in source code form.
 
 ===============================================================================
 Original 240p Test Suite is © Copyright 2011-2021 Artemio Urbina

@@ -314,6 +314,22 @@ msx2_smpte_palette:
         db $22,$02      ; 14 - 11.5
         db $77,$07      ; 15 - White.
 
+SETWRT3:
+        ld a,d
+        and $c0
+        rlca
+        rlca
+        out (VDP+1),a
+        ld a,$8e
+        out (VDP+1),a
+        ld a,e
+	out (VDP+1),a
+        ld a,d
+        and $3f
+	or $40
+	out (VDP+1),a
+	ret
+
 SETWRT2:
         ld a,h
         and $c0
@@ -355,49 +371,61 @@ WRTVRM2:
 
 RDVRM2:
         call SETRD2
-        ex (sp),hl
-        ex (sp),hl
+        push af
+        pop af
         in a,(VDP)
         ret
 
 FILVRM2:
 	push af
         call SETWRT2
-.1:	pop af
-	out (VDP),a
-	push af
-	dec bc
-	ld a,b
-	or c
-	jp nz,.1
-	pop af
+        dec bc
+        inc c
+        ld a,b
+        ld b,c
+        inc a
+        ld c,a
+        pop af
+.1:     out (VDP),a
+        djnz $-2
+        dec c
+        jp nz,.1
 	ret
 
 LDIRVM2:
-        EX DE,HL
-        CALL SETWRT2
-        EX DE,HL
-        DEC BC
-        INC C
-        LD A,B
-        LD B,C
-        INC A
-        LD C,VDP
-.1:     OTIR
-        DEC A
-        JP NZ,.1
+        ex de,hl
+        call SETWRT2
+        ex de,hl
+        dec bc
+        inc c
+        ld a,b
+        ld b,c
+        inc a
+        ld c,VDP
+.1:     otir
+        dec a
+        jp nz,.1
+        RET
+
+LDIRVM2S:
+        ex de,hl
+        call SETWRT2
+        ex de,hl
+        ld c,VDP
+.1:     otir
         RET
 
 LDIRMV2:
         call SETRD2
-        ex (sp),hl
-        ex (sp),hl
-.1:     in a,(VDP)
-        ld (de),a
-        inc de
+        ex de,hl
         dec bc
+        inc c
         ld a,b
-        or c
+        ld b,c
+        inc a
+        ld c,VDP
+.1:     inir
+        dec a
         jp nz,.1
         ret
 
@@ -423,111 +451,63 @@ draw_letter2:
         ld c,a
         ex af,af'
         ld a,c
+        exx
         and $f0
-        ld c,a
+        ld h,a
         rrca
         rrca
         rrca
         rrca
-        or c
-        ld c,a
-        ld de,bitmap_letters
-.1:
-        bit 7,(hl)
-        ld b,$e0
-        jr z,$+6
-        ld a,c
-        and $f0
-        ld b,a
-        bit 6,(hl)
-        ld a,$0e
-        jr z,$+5
-        ld a,c
-        and $0f
-        or b
-        ld (de),a
-        inc de
-        bit 5,(hl)
-        ld b,$e0
-        jr z,$+6
-        ld a,c
-        and $f0
-        ld b,a
-        bit 4,(hl)
-        ld a,$0e
-        jr z,$+5
-        ld a,c
-        and $0f
-        or b
-        ld (de),a
-        inc de
-        bit 3,(hl)
-        ld b,$e0
-        jr z,$+6
-        ld a,c
-        and $f0
-        ld b,a
-        bit 2,(hl)
-        ld a,$0e
-        jr z,$+5
-        ld a,c
-        and $0f
-        or b
-        ld (de),a
-        inc de
-        inc hl
-        ld a,e
-        cp 255 and (bitmap_letters+3*8)
-        jp nz,.1
+        ld l,a
+        exx
         pop de
         push de
+        ld b,8
+.1:
         di
-        ld hl,bitmap_letters
-        ld bc,$0003
-        call LDIRVM2
-        ex de,hl
-        ld bc,$0080
-        add hl,bc
-        ex de,hl
-        ld c,$03
-        call LDIRVM2
-        ex de,hl
-        ld bc,$0080
-        add hl,bc
-        ex de,hl
-        ld c,$03
-        call LDIRVM2
-        ex de,hl
-        ld bc,$0080
-        add hl,bc
-        ex de,hl
-        ld c,$03
-        call LDIRVM2
-        ex de,hl
-        ld bc,$0080
-        add hl,bc
-        ex de,hl
-        ld c,$03
-        call LDIRVM2
-        ex de,hl
-        ld bc,$0080
-        add hl,bc
-        ex de,hl
-        ld c,$03
-        call LDIRVM2
-        ex de,hl
-        ld bc,$0080
-        add hl,bc
-        ex de,hl
-        ld c,$03
-        call LDIRVM2
-        ex de,hl
-        ld bc,$0080
-        add hl,bc
-        ex de,hl
-        ld c,$03
-        call LDIRVM2
+        call SETWRT3
+        ld a,(hl)
+        inc hl
+        exx
+        ld d,a
+        rl d
+        ld b,$e0
+        jr nc,$+3
+        ld b,h
+        rl d
+        ld a,$0e
+        jr nc,$+3
+        ld a,l
+        or b
+        out (VDP),a
+        rl d
+        ld b,$e0
+        jr nc,$+3
+        ld b,h
+        rl d
+        ld a,$0e
+        jr nc,$+3
+        ld a,l
+        or b
+        out (VDP),a
+        rl d
+        ld b,$e0
+        jr nc,$+3
+        ld b,h
+        rl d
+        ld a,$0e
+        jr nc,$+3
+        ld a,l
+        or b
+        out (VDP),a
+        exx
         ei
+        ld a,e
+        add a,$80
+        ld e,a
+        jr nc,$+3
+        inc d
+        djnz .1
         pop hl
         inc hl
         inc hl
@@ -577,10 +557,9 @@ unpack2:
         call nmi_off
 .literal2:
         ex af,af'
+        call SETWRT3
         ld a,(hl)
-        ex de,hl
-        call WRTVRM2
-        ex de,hl
+	out (VDP),a
         inc hl
         inc de
         ex af,af'
@@ -652,17 +631,22 @@ unpack2:
         ex af,af'
         call nmi_off
 .loop2:
-        call RDVRM2              ; unpack
-        ex de,hl
-        call WRTVRM2
-        ex de,hl        ; 4
-        inc hl          ; 6
-        inc de          ; 6
-        dec bc          ; 6
-        ld a,b          ; 4
-        or c            ; 4
-        jp nz,.loop2     ; 10
+        call SETRD2
+        push af
+        pop af
+        in a,(VDP)
+	push af
+        call SETWRT3
+	pop af
+	out (VDP),a
+        inc hl         
+        inc de         
+        dec bc         
+        ld a,b         
+        or c           
+        jp nz,.loop2    
         call nmi_on
+
         ex af,af'
         pop hl
         jp (iy)
@@ -1777,7 +1761,7 @@ credits_text:
         dw $1420
         db $de,"http://junkerhq.net/xrgb",0
         dw $1520
-        db $ce,"Build date: Jan/23/2024",0
+        db $ce,"Build date: Jan/27/2024",0
         dw $0000
 
 reload_menu:
@@ -3104,11 +3088,11 @@ unpack:
         sbc hl,bc
         pop bc
         ex af,af'
-.loop2:  call nmi_off
+        call nmi_off
+.loop2: 
         call RDVRM              ; unpack
         ex de,hl
         call WRTVRM
-        call nmi_on
         ex de,hl        ; 4
         inc hl          ; 6
         inc de          ; 6
@@ -3116,6 +3100,7 @@ unpack:
         ld a,b          ; 4
         or c            ; 4
         jr nz,.loop2     ; 10
+        call nmi_on
         ex af,af'
         pop hl
         jp (iy)

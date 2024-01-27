@@ -38,7 +38,7 @@ Here's a description of each one of the options, as well as any specific command
 
 ### Test Patterns > SMPTE Color Bars.
 
-Currently this test is an afterthought and it could be removed as the color levels hadn't been measured.
+Currently the color levels in this test haven't been measured.
 
 ### Test Patterns > Color Bleed Check.
 
