@@ -250,6 +250,7 @@ patterns_color_bleed:
         db $aa,$55,$aa,$55,$aa,$55,$aa,$55
         db $aa,$55,$aa,$55,$aa,$55,$aa,$55
 
+    if 0
 patterns_circles:
     if MSX
         call fast_vdp_mode_2
@@ -284,6 +285,7 @@ patterns_circles:
     endif
         call reload_menu
         jp patterns_menu
+    endif
 
 patterns_monoscope:
     if MSX

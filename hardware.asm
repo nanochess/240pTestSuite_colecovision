@@ -336,11 +336,13 @@ controller_test:
         db $0c,$06
     endif
 
+    if 0
 sha1_test:
         db "The quick brown fox jumps over the lazy dog"
         ; https://www.di-mgt.com.au/sha_testvectors.html
 sha1_test2:
 	db "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu"
+    endif
 
 bios_test:
         call clean_menu

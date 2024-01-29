@@ -30,8 +30,8 @@
         ;
             
 COLECO: equ 0   ; Define this to 1 for Colecovision
-MSX:    equ 1   ; Define this to 1 for MSX
-SG1000: equ 0   ; Define this to 1 for SG1000
+MSX:    equ 0   ; Define this to 1 for MSX
+SG1000: equ 1   ; Define this to 1 for SG1000
 
 BASE_MENU:      equ $0820
 
@@ -3210,8 +3210,10 @@ sharpness0:
         incbin "sharpness0.bin"
 sharpness1:
         incbin "sharpness1.bin"
+   if 0
 circles_bin:
         incbin "circles0.bin"
+   endif
 
 bars0_dat:
         incbin "bars1.dat",$0400,$0080
