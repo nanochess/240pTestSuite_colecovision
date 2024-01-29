@@ -1,8 +1,8 @@
-# 240p suite for Colecovision.
+# 240p suite for Colecovision/MSX/SG1000.
 
 ### Original program by Artemio Urbina. Colecovision/MSX/SG1000 version by Oscar Toledo G.
 
-### Last revision: Jan/18/2024.
+### Last revision: Jan/29/2024.
 
 Choose items from the menu by moving the stick up and down using any controller.
 
@@ -56,12 +56,6 @@ Move the stick to the left and right to change the white lines to gray and black
 
 Designed by Keith Raney.
 
-### Test Patterns > Grid
-
-A grid which borrows its basic pattern from the CPS-2 grid. It is used to determine linearity on CRTs, but is presented here in order to align the screen and find out overscan on the display. It uses the full resolution of the target console, with a margin of red squares for the corners.
-
-Consumer CRTs usually don't allow compensating for overscan, and many games don't draw outside the white square borders. You can measure how many pixels your display is cropping with the overscan test. 
-
 ### Test Patterns > White & Black Screens.
 
 As the name implies, the screen is filled with solid white.
@@ -73,6 +67,12 @@ A full white screen usually makes evident audio interference in some RGB cables.
 The fully black screen might cause some displays or upscan converters to stop recognizing the signal, which is a common (and undesirable) condition during gameplay.
 
 TODO: Measure the "ultrablack" color.
+
+### Test Patterns > Grid
+
+A grid which borrows its basic pattern from the CPS-2 grid. It is used to determine linearity on CRTs, but is presented here in order to align the screen and find out overscan on the display. It uses the full resolution of the target console, with a margin of red squares for the corners.
+
+Consumer CRTs usually don't allow compensating for overscan, and many games don't draw outside the white square borders. You can measure how many pixels your display is cropping with the overscan test. 
 
 ### Test Patterns > Sharpness.
 
@@ -136,7 +136,7 @@ Press key * to remove random variation.
 
 Press key # to exit test.
 
-### Video tests > Grid scroll.
+### Video tests > Grid Scroll Test.
 
 A grid is scrolled vertically or horizontally, which can be used to test linearity of the signal and how well the display copes with scrolling. 
 
@@ -152,7 +152,7 @@ Press key * to reverse direction.
 
 Press key # to exit test.
 
-### Video tests > Horizontal stripes.
+### Video tests > Horizontal Stripes.
 
 A pattern consisting of a full screen of horizontal black and white stripes, one pixel tall each. This is a taxing pattern, specially when pressing the left-side button which enables alternating each frame the color of the lines. A good 240p video processor should show all frames. On several displays we've observed that the screen stays static on the first pattern displayed on screen and no change is shown. For this a Frame counter is present, which can be enabled with the keypad asterisk.
 
@@ -174,11 +174,25 @@ Press key # to exit test.
 
 This test is designed to evaluate how a display deals with dark scenes. A single sprite of variable size can be controlled by the user on top of a completely black background. The dimming zones can be easily spotted while doing this and the rest of the screen should - in theory - remain off. The sprite can be hidden with the right-side button, and the sprite size can be changed with the left-side button. 
 
-### Audio test > Sound test
+### Audio test > Sound Test
 
 It emits an approximate audio frequency of 1000 hz.
 
 Press key # to exit test.
+
+### Audio test > Audio Sync Test
+
+It emits an approximate audio frequency of 1000 hz when the ball hits the wall.
+
+Press key # to exit test.
+
+### Audio test > MDFourier
+
+It generates a tone test and noise test (SN76489 in Colecovision and SG1000).
+
+Same for MSX (AY-3-8910) but added with SCC and FM (if available).
+
+These are intended to be used with MDFourier. which can compare audio signatures and generate a series of graphs that show how they differ. These can help to identify how audio signatures vary between systems, to detect if the audio signals are modified by audio equipment, to find if modifications resulted in audible changes, to help tune emulators, FPGA implementations or mods, etc. 
 
 ### Hardware > Controller test.
 
@@ -192,7 +206,7 @@ Press both side buttons on any controller to exit test.
 
 Shows BIOS checksum (CRC32 for Colecovision, SHA1 for MSX BIOS on first 32K)
 
-It can take a few seconds to show the hash. In MSX emulation the test isn't useful as the emulators tend to patch the MSX BIOS.
+It can take a few seconds to show the hash. In MSX emulation the test isn't useful as some emulators tend to patch the MSX BIOS.
 
 The MSX version includes the MAME and BlueMSX System BIOS databases.
 
@@ -202,7 +216,7 @@ Press any side button on any controller to exit test.
 
 ### Hardware > Memory viewer.
 
-Shows memory contents.
+Shows memory contents starting at $0000 and can explore the whole 64K of Z80 addressing.
 
 Displace address window by moving stick up or down on any controller.
 
