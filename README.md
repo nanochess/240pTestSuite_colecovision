@@ -23,6 +23,8 @@ More info about the 240p Test Suite is available at [https://junkerhq.net/240p/]
     
 Detailed usage instructions are in the [Suite_manual.md](Suite_manual.md) file.
 
+![240p Test Suite running in MSX 2+](README.jpg)
+
 ### How to assemble
 
 For assembling yourself the source code, you require tniASM v0.44 or v0.45 available freely from [http://www.tni.nl/products/tniasm.html](http://www.tni.nl/products/tniasm.html)
