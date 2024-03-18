@@ -2,7 +2,7 @@
 
 ### What is this?
 
-This is a port of the Artemio's 240p Test suite for Colecovision consoles, MSX 1/2/2+ computers, and Sega SG1000 consoles. It is a software suite developed to help in the evaluation of capture cards, upscalers, upscan converters, line doublers, and of course TV processiong of 240p video and scaled signals.
+This is a port of the Artemio's 240p Test suite for Colecovision consoles, MSX 1/2/2+ computers, and Sega SG1000 consoles. It is a software suite developed to help in the evaluation of capture cards, upscalers, upscan converters, line doublers, and of course TV processing of 240p video and scaled signals.
 
 The original 240p Test Suite is available at [https://github.com/ArtemioUrbina/240pTestSuite](https://github.com/ArtemioUrbina/240pTestSuite)
 
@@ -10,15 +10,18 @@ More info about the 240p Test Suite is available at [https://junkerhq.net/240p/]
 
 ### How to use it.
 
-Your options to use the suite.rom file are:
-
-* Your favorite Colecovision/MSX/SG1000 emulator (BlueMSX, OpenMSX or CoolCV).
-* Load the file into a flash cartridge like the AtariMAX Ultimate SD Colecovision cartridge or the MSX MegaFlash SD cartridge.
-* Program the file into an EPROM and put it into a cartridge PCB for Colecovision/MSX/SG1000.
-
-Detailed usage instructions are in the Suite_manual.md file.
-
-The mapper used for the MSX version is SCC.
+* Colecovision
+    * Load the file *suitecv.rom* in your favorite Colecovision emulator (BlueMSX, OpenMSX or CoolCV).
+    * Load the file *suitecv.rom* into a flash cartridge like the AtariMAX Ultimate SD Colecovision cartridge.
+    * Program the file *suitecv.rom* onto a 32K cartridge PCB.
+* MSX 1/2/2+ (SCC mapper)
+    * Load the file *suitemsx.rom* in your favorite MSX emulator (BlueMSX, OpenMSX, Meisei, fMSX)
+    * Load the file *suitemsx.rom* into a flash cartridge like the MSX MegaFlash SD cartridge or the Carnivore 2 cartridge.
+* Sega SG1000.
+    * Load the file *suitesg.rom* in your favorite SG1000 emulator (BlueMSX, Meka, CoolCV, etc.)
+    * Program the file *suitesg.rom* onto a 32K cartridge PCB.
+    
+Detailed usage instructions are in the [Suite_manual.md](Suite_manual.md) file.
 
 ### How to assemble
 
