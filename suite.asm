@@ -29,9 +29,9 @@
         ; Revision date: Jan/04/2024. Added Audio Sync Test.
         ;
             
-COLECO: equ 0   ; Define this to 1 for Colecovision
+COLECO: equ 1   ; Define this to 1 for Colecovision
 MSX:    equ 0   ; Define this to 1 for MSX
-SG1000: equ 1   ; Define this to 1 for SG1000
+SG1000: equ 0   ; Define this to 1 for SG1000
 
 BASE_MENU:      equ $0820
 
@@ -39,7 +39,7 @@ BASE_MENU:      equ $0820
         ; MSX2 definitions.
         ;
 BASE_MENU2:     equ $2410
-MSX2_SPRITE_SAT:equ $fe00
+MSX2_SPRITE_SAT:	equ $fe00
 RG9SAV:         equ $ffe9
 RG11SAV:        equ $ffeb
 

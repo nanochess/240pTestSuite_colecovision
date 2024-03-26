@@ -1343,7 +1343,7 @@ lag_test:
 
 .build_circle:
         push hl
-    if ((buffer and 255)+55)>255
+    if (buffer/256*256)-(buffer+55)/256*256
         error "generate error"
     endif
         ld hl,buffer

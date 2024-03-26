@@ -23,6 +23,7 @@ More info about the 240p Test Suite is available at [https://junkerhq.net/240p/]
     
 Detailed usage instructions are in the [Suite_manual.md](Suite_manual.md) file.
 
+![240p Test Suite running in MSX 1](README2.jpg)
 ![240p Test Suite running in MSX 2+](README.jpg)
 
 ### How to assemble
