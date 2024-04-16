@@ -1178,6 +1178,11 @@ START:
         call vdp_no_interrupt
         call vdp_no_interrupt
 
+        ld a,$92        ; Setup 8255
+        out ($df),a
+        ld a,$07        ; Connect joysticks to input ports
+        out ($de),a
+
         ;
         ; Clear memory
         ;
