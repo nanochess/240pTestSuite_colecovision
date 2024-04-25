@@ -757,7 +757,11 @@ LDIRVM:
         LD B,C
         INC A
         LD C,VDP
-.1:     OUTI
+.1:    
+    if SG1000
+	NOP	
+    endif
+	OUTI
         JP NZ,.1
         DEC A
         JP NZ,.1
