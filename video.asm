@@ -580,7 +580,7 @@ grid_scroll:
         ld (de),a
         inc de
         ld a,e
-        cp 255 and (buffer+8)
+        cp 255&(buffer+8)
         jp nz,.14
         jr .11
 
@@ -1343,9 +1343,9 @@ lag_test:
 
 .build_circle:
         push hl
-    if (buffer/256*256)-(buffer+55)/256*256
-        error "generate error"
-    endif
+;    if (buffer/256*256)-(buffer+55)/256*256
+;        error "generate error"
+;    endif
         ld hl,buffer
         ld (hl),b
         inc l

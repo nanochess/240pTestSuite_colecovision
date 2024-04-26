@@ -28,7 +28,7 @@ Detailed usage instructions are in the [Suite_manual.md](Suite_manual.md) file.
 
 ### How to assemble
 
-For assembling yourself the source code, you require tniASM v0.44 or v0.45 available freely from [http://www.tni.nl/products/tniasm.html](http://www.tni.nl/products/tniasm.html)
+For assembling yourself the source code, you require _gasm80_ available freely from [https://github.com/nanochess/gasm80](https://github.com/nanochess/gasm80)
 
 You only need to assemble the file suite.asm and it includes all the other required files (edit the COLECO, MSX or SG1000 label accordingly).
 

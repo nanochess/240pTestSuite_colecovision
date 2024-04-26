@@ -29,8 +29,8 @@
         ; Revision date: Jan/04/2024. Added Audio Sync Test.
         ;
             
-COLECO: equ 1   ; Define this to 1 for Colecovision
-MSX:    equ 0   ; Define this to 1 for MSX
+COLECO: equ 0   ; Define this to 1 for Colecovision
+MSX:    equ 1   ; Define this to 1 for MSX
 SG1000: equ 0   ; Define this to 1 for SG1000
 
 BASE_MENU:      equ $0820
@@ -52,8 +52,6 @@ JOY2:   equ $ff-$22*SG1000
 
     if COLECO
                               
-        fname "suitecv.rom"
-
 TURN_OFF_SOUND: EQU $1FD6
 
 KEYSEL: equ $80
@@ -88,8 +86,6 @@ JOYSEL: equ $c0
 
     if SG1000
 
-        fname "suitesg.rom"
-
         org $0000
 
         di
@@ -118,7 +114,7 @@ JOYSEL: equ $c0
 
         jp nmi_handler  ; rst $38
 
-        ds $66-$,$ff
+        times $66-$ db $ff
 
         push af
         ld a,1
@@ -129,8 +125,6 @@ JOYSEL: equ $c0
     endif
 
     if MSX
-        fname "suitemsx.rom"
-
         forg $0000
         org $4000
 	dw $4241
@@ -3245,7 +3239,7 @@ bars5_dat:
 
 rom_end:
 
-        ds COLECO*$10000+MSX*$c000+SG1000*$8000-$,$ff
+        times COLECO*$10000+MSX*$c000+SG1000*$8000-$ db $ff
 
     if MSX
         forg $8000      ; Bank 2
@@ -3260,31 +3254,31 @@ monoscopem2:
 smptem2:
         incbin "smptem2.bin"
 bank2_end:
-        ds $4000,$ff
+        times $c000-$ db $ff
 
         forg $c000      ; Bank 3
         org $8000
 
-        ds $4000,$ff
+        times $c000-$ db $ff
 
         forg $10000     ; Bank 4
         org $8000
 
-        ds $4000,$ff
+        times $c000-$ db $ff
 
         forg $14000     ; Bank 5
         org $8000
 
         include "blue.asm"
 
-        ds $c000-$,$ff
+        times $c000-$ db $ff
 
         forg $18000     ; Bank 6 and 7
         org $4000
 
         include "mame.asm"
 
-        ds $c000-$,$ff
+        times $c000-$ db $ff
 
     endif
 

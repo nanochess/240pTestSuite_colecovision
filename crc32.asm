@@ -297,7 +297,7 @@ crc32_calculate:
         ld h,0
         add hl,hl
         add hl,hl
-        ld a,crc32_table and 255
+        ld a,crc32_table&255
         add a,l
         ld l,a
         ld a,h

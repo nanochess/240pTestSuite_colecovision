@@ -1,2 +1,2 @@
 @echo off
-tniasm suite.asm
+gasm80 suite.asm -o suite.rom
